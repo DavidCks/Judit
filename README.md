@@ -1,7 +1,5 @@
 <h1 style="text-align: center">Judit</h1>
 
----------------
-
 <h3 style="text-align: center; font-weight: normal;">A no-code editor written with yew in the Rust language</h3>
 
 <p>This is basically just an excuse to learn rust and yew for me. It might help the occasional lost soul in search of an incrediby niche solution though so here it is.</p>

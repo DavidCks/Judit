@@ -22,13 +22,17 @@ struct Transform {
 #[derive(Reflect)]
 struct ComponentStyle {
     position: String,
-    transform_origin: String,
+
     top: String,
     left: String,
     width: String,
     height: String,
+
     background_color: String,
+
+    transform_origin: String,
     transform: Transform,
+
     border_radius: String,
 }
 
@@ -37,7 +41,7 @@ impl Style for ComponentStyle {
         append_to_string!( 
             Self {
                 position: "absolute",
-                transform_origin: "center",
+                transform_origin: "bottom right 20px",
                 top: "0px",
                 left: "0px",
                 width: "100px",
@@ -61,11 +65,11 @@ pub enum Msg {
     ReceiveCursorMove(MouseEvent),
 
     // Drag and Drop
-    StartMovingWithCursor(DragEvent),
+    StartEditingWithCursor(DragEvent),
     StopEditingWithCursor(MouseEvent),
 
-    Select(MouseEvent),
-    
+    Select,
+    Deselect,
 }
 
 pub struct EditableElement {
@@ -120,18 +124,32 @@ impl Component for EditableElement {
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::Select(e) => {
-                e.prevent_default();
-
-                self.is_selected = true;
-
+            Msg::Select => {
+                
+                if !self.is_selected {
+                    // Send this comoponents instrance context to the parent.
+                    let child_link = ctx.link().clone();
+                    self.parent_link.send_message( PMsg::ReceiveSelectedChildLink( child_link ));
+                    
+                    self.is_selected = true;
+                    return true;
+                }
                 false
             }
-            Msg::StartMovingWithCursor(e) => {
+            Msg::Deselect => {
+                self.is_selected = false;
+
+                // reset previous mouse position
+                self.previous_mouse_x = None;
+                self.previous_mouse_y = None;
+                true
+            }
+            Msg::StartEditingWithCursor(e) => {
                 e.prevent_default();
 
-                // enable editing this components instance 
-                self.is_selected = true;
+                if !self.is_selected {
+                    ctx.link().send_message(Msg::Select);
+                }
 
                 // determine wether the border has been clicked or the box
                 let resize_range = 5;
@@ -157,10 +175,6 @@ impl Component for EditableElement {
                 if !self.is_resizeable {
                     self.is_movable =  true;
                 }
-
-                // Send this comoponents instrance context to the parent.
-                let child_link = ctx.link().clone();
-                self.parent_link.send_message( PMsg::ReceiveSelectedChildLink( child_link ));
 
                 false
             }
@@ -212,10 +226,10 @@ impl Component for EditableElement {
                         let relative_y: f64 = self.style.top.try_to_f64().unwrap() + f64::from(offset_y);
                         let relative_height: f64 = self.style.height.try_to_f64().unwrap() - f64::from(offset_y);
                         
-                        self.style.top = format!("{}px", relative_y.trunc());
-                        // prevent negative heights
+                        // prevent negative heights and movement after min. height is achieved
                         if relative_height > 1_f64 {
                             self.style.height = format!("{}px", relative_height.trunc());
+                            self.style.top = format!("{}px", relative_y.trunc());
                         }
                     }
 
@@ -263,7 +277,7 @@ impl Component for EditableElement {
         // This gives us a component's "`Scope`" which allows us to send messages, etc to the component.
         let link = ctx.link();
         
-        log::info!("\nmoveable: {}\nresizeable: {}\nrLeft: {}; rRight: {}; rTop{}; rBot{}; \nselected: {}\nprev_x: {}; prev_y: {};", self.is_movable, self.is_resizeable, self.is_resizeable_left, self.is_resizeable_right, self.is_resizeable_top, self.is_resizeable_bottom, self.is_selected, self.previous_mouse_x.unwrap_or_default(), self.previous_mouse_y.unwrap_or_default());
+        log::info!("top: {}\nmoveable: {}\nresizeable: {}\nrLeft: {}; rRight: {}; rTop{}; rBot{}; \nselected: {}\nprev_x: {}; prev_y: {};", self.style.top, self.is_movable, self.is_resizeable, self.is_resizeable_left, self.is_resizeable_right, self.is_resizeable_top, self.is_resizeable_bottom, self.is_selected, self.previous_mouse_x.unwrap_or_default(), self.previous_mouse_y.unwrap_or_default());
 
         // Base styling
         let mut style = format!("{}",  self.style.inline());
@@ -276,8 +290,8 @@ impl Component for EditableElement {
 
         html! {
             <div draggable="true"
-                onclick = { link.callback( |e| Msg::Select(e) )}
-                ondragstart = { link.callback( |e| Msg::StartMovingWithCursor(e) )}
+                onclick = { link.callback( |_| Msg::Select )}
+                ondragstart = { link.callback( |e| Msg::StartEditingWithCursor(e) )}
                 onmouseup = { link.callback( |e| Msg::StopEditingWithCursor(e) )}
                 style={ style }>
                     <p style={"text-align: center"}>{ &self.style.top }</p>

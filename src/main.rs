@@ -31,13 +31,15 @@ impl Component for App {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::ReceiveSelectedChildLink(child_scope) => {
+                // Deselect current child
+                if let Some(link) = self.selected_child.as_ref() {
+                    link.send_message(CMsg::Deselect);
+                }
                 self.selected_child = Some( child_scope );
-
                 false
             }
             Msg::ReceiveChildrenLink(child_scope) => {
                 self.children.push(child_scope);
-
                 false
             }
             Msg::PropagateCursorMove(e) => {
@@ -45,7 +47,6 @@ impl Component for App {
                 if let Some(link) = self.selected_child.as_ref() {
                     link.send_message(CMsg::ReceiveCursorMove(e));
                 }
-
                 false
             }
             Msg::StopAllEditing(e) => {
@@ -53,7 +54,6 @@ impl Component for App {
                 if let Some(link) = self.selected_child.as_ref() {
                     link.send_message(CMsg::StopEditingWithCursor(e));
                 }
-
                 false
             }
         }
@@ -70,6 +70,7 @@ impl Component for App {
                 opacity: 1;
                 background-image: radial-gradient(#b1b1b1 1px, #f9f9f9 1px);
                 background-size: 20px 20px;"}>
+                <EditableElement />
                 <EditableElement />
                 <EditableElement />
             </div>

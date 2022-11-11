@@ -1,0 +1,45 @@
+[package]
+name = "judit"
+version = "0.0.1"
+edition = "2021"
+description = "Judit is an open-source no-code design editor written in rust"
+repository = "https://github.com/DavidCks/judit"
+readme = "README.md"
+license = "MIT"
+keywords = ["no-code", "css-editor", "webdev", "style-editor", "design"]
+categories = ["web-programming"]
+homepage = "https://github.com/DavidCks"
+authors = ["David Christ <david.christ99@live.de>"]
+
+exclude = [
+    "tests/*",
+    ".github/*",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# frontend framework
+yew = "0.19"
+
+# js utilities
+web-sys = { version="0.3.60", features=["MouseEvent", "DomRect", "Element", "EventListener", "EventTarget"] }
+wasm-bindgen = "0.2.38"
+gloo-events = "0.1"
+
+# css utilities
+rusty-css = { git="https://github.com/DavidCks/rusty-css", branch = "main" }
+
+# used for making structs iterable
+bevy_reflect = "0.8.1"
+
+# used for logging to the dev tools console in the browser
+wasm-logger = "0.2"
+log = "0.4.6"
+
+# used for the convenience of not having to write .to_string() after every &str
+append_to_string = "0.1.0"
+
+
+[dev-dependencies]
+

@@ -1,6 +1,9 @@
 use yew::prelude::*;
 use yew::html::Scope;
-use web_sys::{ MouseEvent };
+use web_sys::{ MouseEvent, window };
+use append_to_string::*;
+use bevy_reflect::{ Reflect };
+use rusty_css::*;
 
 mod components;
 pub use components::{ EditableElement::* };
@@ -12,7 +15,35 @@ pub enum Msg {
     PropagateCursorMove(MouseEvent),
     StopAllEditing(MouseEvent),
 }
+
+#[derive(Reflect)]
+struct CanvasStyle {
+    margin: String, 
+    height: String,
+    width: String,
+    background_color: String,
+    opacity: String,
+    background_image: String,
+    background_size: String,
+}
+
+impl Style for CanvasStyle {
+    fn create() -> Self {
+        append_to_string!( 
+            Self {
+                margin: "-8px", 
+                height: "100vh",
+                width: "100vw",
+                background_color: "#f9f9f9",
+                opacity: "1",
+                background_image: "radial-gradient(#b1b1b1 1px, #f9f9f9 1px)",
+                background_size: "20px 20px",
+            }
+        )
+    }
+}
 struct App {
+    style: CanvasStyle,
     children: Vec<Scope<EditableElement>>,
     selected_child: Option<Scope<EditableElement>>,
 }
@@ -23,6 +54,7 @@ impl Component for App {
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
+            style: CanvasStyle::create(),
             children: Vec::new(),
             selected_child: None,
         }
@@ -62,18 +94,21 @@ impl Component for App {
     fn view(&self, ctx: &Context<Self>) -> Html {
         // This gives us a component's "`Scope`" which allows us to send messages, etc to the component.
         let link = ctx.link();
+
+        let window = window().expect("No global `window` found");
+        let document = window.document().expect("couldn't get `document");
+
+        let class_name = self.style.as_class(&document);
+
         html! {
-            <div
+            <main
                 onmousemove = { link.callback( |e| Msg::PropagateCursorMove(e) )}
                 onmouseup = { link.callback( |e| Msg::StopAllEditing(e) )}
-                style={"margin: -8px; height: 100vh; width: 100vw; background-color: #f9f9f9;
-                opacity: 1;
-                background-image: radial-gradient(#b1b1b1 1px, #f9f9f9 1px);
-                background-size: 20px 20px;"}>
+                class = { class_name.unwrap_or_default() }>
                 <EditableElement />
                 <EditableElement />
                 <EditableElement />
-            </div>
+            </main>
         }
     }
 }

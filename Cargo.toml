@@ -28,7 +28,7 @@ wasm-bindgen = "0.2.38"
 gloo-events = "0.1"
 
 # css utilities
-rusty-css = { git="https://github.com/DavidCks/rusty-css", branch = "main" }
+rusty-css = { git="https://github.com/DavidCks/rusty-css.git", branch = "main" }
 
 # used for making structs iterable
 bevy_reflect = "0.8.1"

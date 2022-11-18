@@ -297,6 +297,6 @@ impl Component for EditableElement {
                     <p style={"text-align: center"}>{ &self.style.top }</p>
                     <p style={"text-align: center"}>{ &self.style.left }</p>
             </div>
-    }
+        }
     }
 }

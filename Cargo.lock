@@ -444,7 +444,7 @@ dependencies = [
 [[package]]
 name = "rusty-css"
 version = "0.1.0"
-source = "git+https://github.com/DavidCks/rusty-css.git?branch=main#950aad014ef2c6fc18d7dcffe5e97354e4c18cc7"
+source = "git+https://github.com/DavidCks/rusty-css.git?branch=main#4e768060c551ed97ab2b4d42023bbbe436e53d80"
 dependencies = [
  "bevy_reflect",
  "log",
@@ -502,9 +502,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.88"
+version = "1.0.89"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e8b3801309262e8184d9687fb697586833e939767aea0dda89f5a8e650e8bd7"
+checksum = "020ff22c755c2ed3f8cf162dbb41a7268d934702f3ed3631656ea597e08fc3db"
 dependencies = [
  "itoa",
  "ryu",

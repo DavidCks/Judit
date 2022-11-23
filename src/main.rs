@@ -108,6 +108,7 @@ impl Component for App {
                 <EditableElement />
                 <EditableElement />
                 <EditableElement />
+                //add component that grabs the style tag, adds content-editable + display: block so it can be live edited
             </main>
         }
     }

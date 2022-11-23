@@ -1,3 +1,4 @@
+use log::info;
 //use log::info;
 use yew::{prelude::*};
 use yew::html::Scope;
@@ -6,6 +7,9 @@ use append_to_string::*;
 use web_sys::{ DragEvent, MouseEvent };
 use rusty_css::*;
 use super::super::Msg as PMsg;
+
+use super::sub_components::EditableBorderRadiusSelecor::EditableBorderRadiusSelector as EditableBorderRadiusSelector;
+use super::sub_components::EditableBorderRadiusSelecor::Positions as ebrsPositions;
 
 // external styles
 use super::static_styles::Selected::Selected as SelectedStyle;
@@ -22,6 +26,7 @@ struct Transform {
 #[derive(Reflect)]
 struct ComponentStyle {
     position: String,
+    box_sizing: String,
 
     top: String,
     left: String,
@@ -41,6 +46,7 @@ impl Style for ComponentStyle {
         append_to_string!( 
             Self {
                 position: "absolute",
+                box_sizing: "border-box",
                 transform_origin: "bottom right 20px",
                 top: "0px",
                 left: "0px",
@@ -48,7 +54,7 @@ impl Style for ComponentStyle {
                 height: "100px",
                 background_color: "lightgray",
                 transform: Transform { 
-                    skewX: "10deg",
+                    skewX: "0deg",
                     skewY: "0deg",
                     translateX: "0px",
                 },
@@ -58,15 +64,19 @@ impl Style for ComponentStyle {
     }
 }
 
+
 // Component Fuctions
 pub enum Msg {
-
+    // Drag and Drop / resize
+    StartEditingWithCursor(DragEvent),
+    StopEditingWithCursor(MouseEvent),
+    
     // Receive Parents mouse move event
     ReceiveCursorMove(MouseEvent),
 
-    // Drag and Drop
-    StartEditingWithCursor(DragEvent),
-    StopEditingWithCursor(MouseEvent),
+    // border radius
+    StartEditingBorderRadius(ebrsPositions, MouseEvent),
+    StopEditingBorderRadius(ebrsPositions, MouseEvent),
 
     Select,
     Deselect,
@@ -86,6 +96,12 @@ pub struct EditableElement {
     is_resizeable_right: bool,
     is_resizeable_top: bool,
     is_resizeable_bottom: bool,
+
+    is_eidting_radius: bool,
+    is_eidting_radius_left: bool,
+    is_eidting_radius_right: bool,
+    is_eidting_radius_top: bool,
+    is_eidting_radius_bottom: bool,
 
     is_selected: bool,
 
@@ -118,6 +134,12 @@ impl Component for EditableElement {
             is_resizeable_top: false,
             is_resizeable_bottom: false,
 
+            is_eidting_radius: false,
+            is_eidting_radius_left: false,
+            is_eidting_radius_right: false,
+            is_eidting_radius_top: false,
+            is_eidting_radius_bottom: false,
+
             is_selected: false,
         }
     }
@@ -147,14 +169,21 @@ impl Component for EditableElement {
             Msg::StartEditingWithCursor(e) => {
                 e.prevent_default();
 
+                ///////////////////////////////////////////////////////////////////////////
+                // edit elements width / height or move element based on cursor position //
+                ///////////////////////////////////////////////////////////////////////////
+
+                // select if not already selected
                 if !self.is_selected {
                     ctx.link().send_message(Msg::Select);
                 }
 
+
+
                 // determine wether the border has been clicked or the box
                 let resize_range = 5;
 
-                // horizontal
+                // horizontal resize
                 if e.offset_x() < resize_range { // left side
                     self.is_resizeable = true;
                     self.is_resizeable_left = true;
@@ -163,7 +192,7 @@ impl Component for EditableElement {
                     self.is_resizeable_right = true;
                 }
 
-                // vertical
+                // vertical resize
                 if e.offset_y() < resize_range { // top side
                     self.is_resizeable = true;
                     self.is_resizeable_top = true;
@@ -172,6 +201,7 @@ impl Component for EditableElement {
                     self.is_resizeable_bottom = true;
                 }
 
+                // free movement
                 if !self.is_resizeable {
                     self.is_movable =  true;
                 }
@@ -187,6 +217,29 @@ impl Component for EditableElement {
                 self.is_resizeable_left = false;
                 self.is_resizeable_right = false;
                 self.is_resizeable_top = false;
+
+                false
+            }
+            Msg::StartEditingBorderRadius(pos, e) => {
+                
+                info!("gay");
+                match pos {
+                    ebrsPositions::TopLeft => {
+                        info!("topleft");
+                    }
+                    ebrsPositions::BottomLeft => {
+                        
+                    }
+                    ebrsPositions::TopRight => {
+                        
+                    }
+                    ebrsPositions::BottomRight => {
+                        
+                    }
+                }
+                false
+            }
+            Msg::StopEditingBorderRadius(pos, _e) => {
 
                 false
             }
@@ -277,7 +330,7 @@ impl Component for EditableElement {
         // This gives us a component's "`Scope`" which allows us to send messages, etc to the component.
         let link = ctx.link();
         
-        log::info!("top: {}\nmoveable: {}\nresizeable: {}\nrLeft: {}; rRight: {}; rTop{}; rBot{}; \nselected: {}\nprev_x: {}; prev_y: {};", self.style.top, self.is_movable, self.is_resizeable, self.is_resizeable_left, self.is_resizeable_right, self.is_resizeable_top, self.is_resizeable_bottom, self.is_selected, self.previous_mouse_x.unwrap_or_default(), self.previous_mouse_y.unwrap_or_default());
+        //log::info!("top: {}\nmoveable: {}\nresizeable: {}\nrLeft: {}; rRight: {}; rTop{}; rBot{}; \nselected: {}\nprev_x: {}; prev_y: {};", self.style.top, self.is_movable, self.is_resizeable, self.is_resizeable_left, self.is_resizeable_right, self.is_resizeable_top, self.is_resizeable_bottom, self.is_selected, self.previous_mouse_x.unwrap_or_default(), self.previous_mouse_y.unwrap_or_default());
 
         // Base styling
         let mut style = format!("{}",  self.style.inline());
@@ -294,8 +347,18 @@ impl Component for EditableElement {
                 ondragstart = { link.callback( |e| Msg::StartEditingWithCursor(e) )}
                 onmouseup = { link.callback( |e| Msg::StopEditingWithCursor(e) )}
                 style={ style }>
-                    <p style={"text-align: center"}>{ &self.style.top }</p>
-                    <p style={"text-align: center"}>{ &self.style.left }</p>
+                    if self.is_selected && 
+                       self.style.width.try_to_f64().unwrap() > 20_f64 && 
+                       self.style.height.try_to_f64().unwrap() > 20_f64 {
+                        <EditableBorderRadiusSelector position = {ebrsPositions::TopLeft} 
+                            onmousedown = { link.callback( |e| { Msg::StartEditingBorderRadius(ebrsPositions::TopLeft, e) } )}/>
+                        <EditableBorderRadiusSelector position = {ebrsPositions::TopRight}
+                            onmousedown = { link.callback( |e| Msg::StartEditingBorderRadius(ebrsPositions::TopRight, e) )}/>
+                        <EditableBorderRadiusSelector position = {ebrsPositions::BottomLeft}
+                            onmousedown = { link.callback( |e| Msg::StartEditingBorderRadius(ebrsPositions::BottomLeft, e) )}/>
+                        <EditableBorderRadiusSelector position = {ebrsPositions::BottomRight}
+                            onmousedown = { link.callback( |e| Msg::StartEditingBorderRadius(ebrsPositions::BottomRight, e) )}/>
+                    }
             </div>
         }
     }

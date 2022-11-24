@@ -1,3 +1,5 @@
+use log::info;
+
 use rusty_css::*;
 use yew::{prelude::*};
 use web_sys::{ window };
@@ -22,6 +24,7 @@ impl Style for EditableBorderRadiusSelectorStyle_hover {
     }
 }
 
+
 #[allow(non_snake_case)]
 #[derive(Reflect)]
 struct EditableBorderRadiusSelectorStyle {
@@ -35,6 +38,10 @@ struct EditableBorderRadiusSelectorStyle {
     background_image: String,
     background_color: String,
     border_radius: String,
+    border_width: String,
+    border_color: String,
+    border_style: String,
+    box_sizing: String,
 }
 
 impl Style for EditableBorderRadiusSelectorStyle {
@@ -50,7 +57,11 @@ impl Style for EditableBorderRadiusSelectorStyle {
                 bottom: "initial",
                 background_image: "none",
                 background_color: "gray",
-                border_radius: "100%",
+                border_radius: "",
+                border_width: "",
+                border_color: "",
+                border_style: "solid",
+                box_sizing: "border-box",
             }
         )
     }
@@ -70,10 +81,20 @@ pub enum Positions {
     BottomRight,
 }
 
+#[derive(PartialEq, Properties, Clone)]
+pub struct BorderSelectorStyle {
+    pub border_width: String,
+    pub border_color: String,
+    pub border_radius: String,
+}
+
 #[derive(PartialEq, Properties)]
 pub struct Props {
     pub position: Positions,
+    pub border: BorderSelectorStyle,
+    
     pub onmousedown: Callback<MouseEvent>,
+    pub onmouseup: Callback<MouseEvent>,
 }
 
 impl Component for EditableBorderRadiusSelector {
@@ -115,9 +136,18 @@ impl Component for EditableBorderRadiusSelector {
         style.right = right;
         style.bottom = bottom;
 
+        style.border_color = ctx.props().border.border_color.clone();
+        style.border_width = ctx.props().border.border_width.clone();
+        style.border_radius = ctx.props().border.border_radius.clone();
+
         Self {
             style: style,
         }
+    }
+
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+
+        false
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
@@ -130,7 +160,8 @@ impl Component for EditableBorderRadiusSelector {
         html! {
             <div class = { hover_class.unwrap() }
             style = { self.style.inline() } 
-            onmousedown = { &ctx.props().onmousedown }>
+            onmousedown = { &ctx.props().onmousedown }
+            onmouseup = { &ctx.props().onmouseup }>
             </div>
         }
     }

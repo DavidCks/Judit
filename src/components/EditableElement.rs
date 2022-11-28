@@ -1,12 +1,10 @@
-use std::any::Any;
-
 use log::info;
 //use log::info;
 use yew::{prelude::*};
 use yew::html::Scope;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
-use web_sys::{ DragEvent, MouseEvent, HtmlElement };
+use web_sys::{ MouseEvent, HtmlElement };
 use rusty_css::*;
 use super::super::Msg as PMsg;
 

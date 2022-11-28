@@ -1,6 +1,4 @@
-use std::fmt;
-
-use log::info;
+//use log::info;
 
 use rusty_css::*;
 use yew::{prelude::*};
@@ -8,14 +6,14 @@ use web_sys::{ window };
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 #[derive(Reflect)]
-struct EditableBorderRadiusSelectorStyle_hover {
+struct EditableBorderRadiusSelectorStyle_Hover {
     append: String,
     background_color: String,
 }
 
-impl Style for EditableBorderRadiusSelectorStyle_hover {
+impl Style for EditableBorderRadiusSelectorStyle_Hover {
     fn create() -> Self {
         append_to_string!(
             Self {
@@ -83,7 +81,7 @@ pub enum Positions {
     BottomRight,
 }
 
-#[derive(PartialEq, Properties, Clone)]
+#[derive(PartialEq, Clone)]
 pub struct BorderSelectorStyle {
     pub border_width: String,
     pub border_color: String,
@@ -144,7 +142,7 @@ impl Component for EditableBorderRadiusSelector {
         }
     }
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
 
         false
     }
@@ -154,7 +152,7 @@ impl Component for EditableBorderRadiusSelector {
         let window = window().expect("No global `window` found");
         let document = window.document().expect("couldn't get `document");
 
-        let hover_class = EditableBorderRadiusSelectorStyle_hover::create().as_class(&document);
+        let hover_class = EditableBorderRadiusSelectorStyle_Hover::create().as_class(&document);
 
         html! {
             <div 

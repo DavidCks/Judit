@@ -33,6 +33,7 @@ rusty-css = { git="https://github.com/DavidCks/rusty-css.git", branch = "main" }
 # used for making structs iterable
 bevy_reflect = "0.8.1"
 strum_macros = "0.24.3"
+strum = "0.24.1"
 
 # used for logging to the dev tools console in the browser
 wasm-logger = "0.2"

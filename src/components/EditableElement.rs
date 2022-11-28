@@ -1,4 +1,6 @@
-use log::info;
+use std::str::FromStr;
+
+use log::{ info, error };
 //use log::info;
 use yew::{prelude::*};
 use yew::html::Scope;
@@ -39,7 +41,10 @@ struct ComponentStyle {
     transform_origin: String,
     transform: Transform,
 
-    border_radius: String,
+    border_top_left_radius: String,
+    border_top_right_radius: String,
+    border_bottom_left_radius: String,
+    border_bottom_right_radius: String,
 }
 
 impl Style for ComponentStyle {
@@ -59,7 +64,10 @@ impl Style for ComponentStyle {
                     skewY: "0deg",
                     translateX: "0px",
                 },
-                border_radius: "10px",
+                border_top_left_radius: "10px",
+                border_top_right_radius: "10px",
+                border_bottom_left_radius: "10px",
+                border_bottom_right_radius: "10px",
             }
         )
     }
@@ -214,25 +222,22 @@ impl Component for EditableElement {
                         self.is_eidting_radius = true;
                         self.editing_state = EditStates::BorderRadius;
 
-                        match target.get_attribute("position").unwrap().as_str() {
-                            "TopLeft" => {
+                        match ebrsPositions::from_str( &target.get_attribute("position").unwrap() ).unwrap() {
+                            ebrsPositions::TopLeft => {
                                 info!("topleft");
                                 self.is_eidting_radius_topleft = true;
                             }
-                            "TopRight" => {
+                            ebrsPositions::TopRight => {
                                 info!("topright");
                                 self.is_eidting_radius_topright = true;
                             }
-                            "BottomLeft" => {
+                            ebrsPositions::BottomLeft => {
                                 info!("bottomleft");
                                 self.is_eidting_radius_bottomleft = true;
                             }
-                            "BottomRight" => {
+                            ebrsPositions::BottomRight => {
                                 info!("bottomright");
                                 self.is_eidting_radius_bottomright = true;
-                            }
-                            &_ => {
-
                             }
                         }
                     }
@@ -362,11 +367,40 @@ impl Component for EditableElement {
                         }
                     }
                     EditStates::BorderRadius => {
-                        let relative_raidus: f64 = self.style.border_radius.try_to_f64().unwrap() + f64::from(offset_x);
+                        
+                        if self.is_eidting_radius_topleft {
+                            let relative_raidus: f64 = self.style.border_top_left_radius.try_to_f64().unwrap() + f64::from(offset_x);
 
-                        if relative_raidus.trunc() < 50_f64 && relative_raidus.trunc() >= 0_f64 {
-                            self.style.border_radius = format!("{}%", relative_raidus.trunc());
+                            if relative_raidus.trunc() < 50_f64 && relative_raidus.trunc() >= 0_f64 {
+                                self.style.border_top_left_radius = format!("{}%", relative_raidus.trunc());
+                            }
                         }
+
+                        if self.is_eidting_radius_topright {
+                            let relative_raidus: f64 = self.style.border_top_right_radius.try_to_f64().unwrap() + f64::from(offset_x);
+
+                            if relative_raidus.trunc() < 50_f64 && relative_raidus.trunc() >= 0_f64 {
+                                self.style.border_top_right_radius = format!("{}%", relative_raidus.trunc());
+                            }
+                        }
+
+                        if self.is_eidting_radius_bottomleft {
+                            let relative_raidus: f64 = self.style.border_bottom_left_radius.try_to_f64().unwrap() + f64::from(offset_x);
+
+                            if relative_raidus.trunc() < 50_f64 && relative_raidus.trunc() >= 0_f64 {
+                                self.style.border_bottom_left_radius = format!("{}%", relative_raidus.trunc());
+                            }
+                        }
+
+                        if self.is_eidting_radius_bottomright {
+                            let relative_raidus: f64 = self.style.border_bottom_right_radius.try_to_f64().unwrap() + f64::from(offset_x);
+
+                            if relative_raidus.trunc() < 50_f64 && relative_raidus.trunc() >= 0_f64 {
+                                self.style.border_bottom_right_radius = format!("{}%", relative_raidus.trunc());
+                            }
+                        }
+
+                        
                     }
                     EditStates::None => {
 

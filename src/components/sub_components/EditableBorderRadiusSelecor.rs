@@ -4,6 +4,8 @@ use rusty_css::*;
 use yew::{prelude::*};
 use web_sys::{ window };
 use bevy_reflect::{ Reflect };
+use std::str::FromStr;
+use strum_macros::EnumString;
 use append_to_string::*;
 
 #[allow(non_snake_case, non_camel_case_types)]
@@ -73,7 +75,7 @@ pub struct EditableBorderRadiusSelector {
 
 pub enum Msg {}
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, EnumString, Debug)]
 pub enum Positions {
     TopLeft,
     BottomLeft,

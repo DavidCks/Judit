@@ -1,10 +1,12 @@
+use std::any::Any;
+
 use log::info;
 //use log::info;
 use yew::{prelude::*};
 use yew::html::Scope;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
-use web_sys::{ DragEvent, MouseEvent };
+use web_sys::{ DragEvent, MouseEvent, HtmlElement };
 use rusty_css::*;
 use super::super::Msg as PMsg;
 
@@ -74,16 +76,12 @@ pub enum EditStates {
 
 // Component Fuctions
 pub enum Msg {
-    // Drag and Drop / resize
-    StartEditingWithCursor(DragEvent),
+    // Drag and Drop / resize / border radius
+    StartEditingWithCursor(MouseEvent),
     StopEditingWithCursor(MouseEvent),
     
     // Receive Parents mouse move event
     ReceiveCursorMove(MouseEvent),
-
-    // border radius
-    StartEditingBorderRadius(ebrsPositions, MouseEvent),
-    StopEditingBorderRadius(ebrsPositions, MouseEvent),
 
     Select,
     Deselect,
@@ -208,37 +206,74 @@ impl Component for EditableElement {
                     ctx.link().send_message(Msg::Select);
                 }
 
+                // element that dispatched the original event
+                let target = e.target_dyn_into::<HtmlElement>().unwrap();
 
+                match target.id().as_str() {
+                    // start editing border radius
+                    "rusty-css_EditableBorderRadiusSelector" => {
+                        // endable editing the radius
+                        self.is_eidting_radius = true;
+                        self.editing_state = EditStates::BorderRadius;
 
-                // determine wether the border has been clicked or the box
-                let resize_range = 5;
+                        match target.get_attribute("position").unwrap().as_str() {
+                            "TopLeft" => {
+                                info!("topleft");
+                                self.is_eidting_radius_topleft = true;
+                            }
+                            "TopRight" => {
+                                info!("topright");
+                                self.is_eidting_radius_topright = true;
+                            }
+                            "BottomLeft" => {
+                                info!("bottomleft");
+                                self.is_eidting_radius_bottomleft = true;
+                            }
+                            "BottomRight" => {
+                                info!("bottomright");
+                                self.is_eidting_radius_bottomright = true;
+                            }
+                            &_ => {
 
-                // horizontal resize
-                if e.offset_x() < resize_range { // left side
-                    self.is_resizeable = true;
-                    self.editing_state = EditStates::Resize;
-                    self.is_resizeable_left = true;
-                } else if self.style.width.try_to_f64().unwrap() - <i32 as Into<f64>>::into(resize_range) < e.offset_x().into() { // right side
-                    self.is_resizeable = true;
-                    self.editing_state = EditStates::Resize;
-                    self.is_resizeable_right = true;
-                }
+                            }
+                        }
+                    }
+                    "rusty-css_EditableElement" => {
 
-                // vertical resize
-                if e.offset_y() < resize_range { // top side
-                    self.is_resizeable = true;
-                    self.editing_state = EditStates::Resize;
-                    self.is_resizeable_top = true;
-                } else if self.style.height.try_to_f64().unwrap() - <i32 as Into<f64>>::into(resize_range) < e.offset_y().into() { // bottom side
-                    self.is_resizeable = true;
-                    self.editing_state = EditStates::Resize;
-                    self.is_resizeable_bottom = true;
-                }
+                        // determine wether the border has been clicked or the box
+                        let resize_range = 5;
 
-                // free movement
-                if !self.is_resizeable {
-                    self.is_movable =  true;
-                    self.editing_state = EditStates::Move;
+                        // horizontal resize
+                        if e.offset_x() < resize_range { // left side
+                            self.is_resizeable = true;
+                            self.editing_state = EditStates::Resize;
+                            self.is_resizeable_left = true;
+                        } else if self.style.width.try_to_f64().unwrap() - <i32 as Into<f64>>::into(resize_range) < e.offset_x().into() { // right side
+                            self.is_resizeable = true;
+                            self.editing_state = EditStates::Resize;
+                            self.is_resizeable_right = true;
+                        }
+
+                        // vertical resize
+                        if e.offset_y() < resize_range { // top side
+                            self.is_resizeable = true;
+                            self.editing_state = EditStates::Resize;
+                            self.is_resizeable_top = true;
+                        } else if self.style.height.try_to_f64().unwrap() - <i32 as Into<f64>>::into(resize_range) < e.offset_y().into() { // bottom side
+                            self.is_resizeable = true;
+                            self.editing_state = EditStates::Resize;
+                            self.is_resizeable_bottom = true;
+                        }
+
+                        // free movement
+                        if !self.is_resizeable {
+                            self.is_movable =  true;
+                            self.editing_state = EditStates::Move;
+                        }
+                    }
+                    &_ => {
+                        info!("event target doesn't have an id!")
+                    }
                 }
 
                 false
@@ -254,46 +289,14 @@ impl Component for EditableElement {
                 self.is_resizeable_right = false;
                 self.is_resizeable_top = false;
                 
-                false
-            }
-            Msg::StartEditingBorderRadius(pos, e) => {
-                
-                self.is_eidting_radius = true;
-                self.editing_state = EditStates::BorderRadius;
-                match pos {
-                    ebrsPositions::TopLeft => {
-                        self.is_eidting_radius_topleft = true;
-                    }
-                    ebrsPositions::TopRight => {
-                        self.is_eidting_radius_topright = true;
-                    }
-                    ebrsPositions::BottomLeft => {
-                        self.is_eidting_radius_bottomleft= true;
-                    }
-                    ebrsPositions::BottomRight => {
-                        self.is_eidting_radius_bottomright= true;
-                    }
-                }
-                false
-            }
-            Msg::StopEditingBorderRadius(pos, _e) => {
-                
+
                 self.is_eidting_radius = false;
                 self.editing_state = EditStates::None;
-                match pos {
-                    ebrsPositions::TopLeft => {
-                        self.is_eidting_radius_topleft = false;
-                    }
-                    ebrsPositions::TopRight => {
-                        self.is_eidting_radius_topright = false;
-                    }
-                    ebrsPositions::BottomLeft => {
-                        self.is_eidting_radius_bottomleft = false;
-                    }
-                    ebrsPositions::BottomRight => {
-                        self.is_eidting_radius_bottomright = false;
-                    }
-                }
+                self.is_eidting_radius_topleft = false;
+                self.is_eidting_radius_topright = false;
+                self.is_eidting_radius_bottomleft = false;
+                self.is_eidting_radius_bottomright = false;
+
                 false
             }
             Msg::ReceiveCursorMove(parent_e) => {
@@ -363,7 +366,9 @@ impl Component for EditableElement {
                     EditStates::BorderRadius => {
                         let relative_raidus: f64 = self.style.border_radius.try_to_f64().unwrap() + f64::from(offset_x);
 
-                        self.style.border_radius = format!("{}px", relative_raidus.trunc());
+                        if relative_raidus.trunc() < 50_f64 && relative_raidus.trunc() >= 0_f64 {
+                            self.style.border_radius = format!("{}%", relative_raidus.trunc());
+                        }
                     }
                     EditStates::None => {
 
@@ -403,9 +408,9 @@ impl Component for EditableElement {
         }
 
         html! {
-            <div draggable="true"
+            <div id = { "rusty-css_EditableElement" } 
                 onclick = { link.callback( |_| Msg::Select )}
-                ondragstart = { link.callback( |e| Msg::StartEditingWithCursor(e) )}
+                onmousedown = { link.callback( |e| Msg::StartEditingWithCursor(e) )}
                 onmouseup = { link.callback( |e| Msg::StopEditingWithCursor(e) )}
                 style={ style }>
                     if self.is_selected && 
@@ -413,24 +418,16 @@ impl Component for EditableElement {
                        self.style.height.try_to_f64().unwrap() > 20_f64 {
                         <EditableBorderRadiusSelector 
                             position = {ebrsPositions::TopLeft} 
-                            border = { self.border_selector_style_topleft.clone() }
-                            onmousedown = { link.callback( |e| { Msg::StartEditingBorderRadius(ebrsPositions::TopLeft, e) } )}
-                            onmouseup = { link.callback( |e| { Msg::StopEditingBorderRadius(ebrsPositions::TopLeft, e) } )}/>
+                            border = { self.border_selector_style_topleft.clone() }/>
                         <EditableBorderRadiusSelector 
                             position = {ebrsPositions::TopRight}
-                            border = { self.border_selector_style_topright.clone() }
-                            onmousedown = { link.callback( |e| Msg::StartEditingBorderRadius(ebrsPositions::TopRight, e) )}
-                            onmouseup = { link.callback( |e| { Msg::StopEditingBorderRadius(ebrsPositions::TopRight, e) } )}/>
+                            border = { self.border_selector_style_topright.clone() }/>
                         <EditableBorderRadiusSelector 
                             position = {ebrsPositions::BottomLeft}
-                            border = { self.border_selector_style_bottomleft.clone() }
-                            onmousedown = { link.callback( |e| Msg::StartEditingBorderRadius(ebrsPositions::BottomLeft, e) )}
-                            onmouseup = { link.callback( |e| { Msg::StopEditingBorderRadius(ebrsPositions::BottomLeft, e) } )}/>
+                            border = { self.border_selector_style_bottomleft.clone() }/>
                         <EditableBorderRadiusSelector 
                             position = {ebrsPositions::BottomRight}
-                            border = { self.border_selector_style_bottomright.clone() }
-                            onmousedown = { link.callback( |e| Msg::StartEditingBorderRadius(ebrsPositions::BottomRight, e) )}
-                            onmouseup = { link.callback( |e| { Msg::StopEditingBorderRadius(ebrsPositions::BottomRight, e) } )}/>
+                            border = { self.border_selector_style_bottomright.clone() }/>
                     }
             </div>
         }

@@ -1,3 +1,5 @@
+use std::fmt;
+
 use log::info;
 
 use rusty_css::*;
@@ -73,7 +75,7 @@ pub struct EditableBorderRadiusSelector {
 
 pub enum Msg {}
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Positions {
     TopLeft,
     BottomLeft,
@@ -92,9 +94,6 @@ pub struct BorderSelectorStyle {
 pub struct Props {
     pub position: Positions,
     pub border: BorderSelectorStyle,
-    
-    pub onmousedown: Callback<MouseEvent>,
-    pub onmouseup: Callback<MouseEvent>,
 }
 
 impl Component for EditableBorderRadiusSelector {
@@ -158,10 +157,11 @@ impl Component for EditableBorderRadiusSelector {
         let hover_class = EditableBorderRadiusSelectorStyle_hover::create().as_class(&document);
 
         html! {
-            <div class = { hover_class.unwrap() }
-            style = { self.style.inline() } 
-            onmousedown = { &ctx.props().onmousedown }
-            onmouseup = { &ctx.props().onmouseup }>
+            <div 
+            position = { format!("{:?}", ctx.props().position) }
+            id = {"rusty-css_EditableBorderRadiusSelector"}
+            class = { hover_class.unwrap() }
+            style = { self.style.inline() }>
             </div>
         }
     }

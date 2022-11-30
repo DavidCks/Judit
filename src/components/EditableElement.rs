@@ -244,7 +244,7 @@ impl Component for EditableElement {
                     "rusty-css_EditableElement" => {
 
                         // determine wether the border has been clicked or the box
-                        let resize_range = 5;
+                        let resize_range = 10;
 
                         // horizontal resize
                         if e.offset_x() < resize_range { // left side

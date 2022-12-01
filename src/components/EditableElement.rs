@@ -6,13 +6,16 @@ use yew::{prelude::*};
 use yew::html::Scope;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
-use web_sys::{ MouseEvent, HtmlElement };
+use web_sys::{ MouseEvent, HtmlElement, SvgElement, Element };
 use rusty_css::*;
 use super::super::Msg as PMsg;
 
 use super::sub_components::EditableBorderRadiusSelecor::EditableBorderRadiusSelector as EditableBorderRadiusSelector;
 use super::sub_components::EditableBorderRadiusSelecor::Positions as ebrsPositions;
 use super::sub_components::EditableBorderRadiusSelecor::BorderSelectorStyle;
+
+use super::sub_components::Transform3DSelector::Transform3DSelector as Transform3DSelector;
+use super::sub_components::Transform3DToggle::Transform3DToggle as Transform3DToggle;
 
 // external styles
 use super::static_styles::Selected::Selected as SelectedStyle;
@@ -23,6 +26,9 @@ struct Transform {
     skewX: String,
     skewY: String,
     translateX: String,
+    rotateX: String,
+    rotateY: String,
+    rotateZ: String,
 }
 
 #[allow(non_snake_case)]
@@ -39,6 +45,7 @@ struct ComponentStyle {
     background_color: String,
 
     transform_origin: String,
+    transform_style: String,
     transform: Transform,
 
     border_top_left_radius: String,
@@ -53,16 +60,20 @@ impl Style for ComponentStyle {
             Self {
                 position: "absolute",
                 box_sizing: "border-box",
-                transform_origin: "bottom right 20px",
                 top: "0px",
                 left: "0px",
                 width: "100px",
                 height: "100px",
                 background_color: "lightgray",
+                transform_origin: "50% 50%",
+                transform_style: "preserve-3d",
                 transform: Transform { 
                     skewX: "0deg",
                     skewY: "0deg",
                     translateX: "0px",
+                    rotateX: "0deg",
+                    rotateY: "0deg",
+                    rotateZ: "0deg",
                 },
                 border_top_left_radius: "10px",
                 border_top_right_radius: "10px",
@@ -78,6 +89,7 @@ pub enum EditStates {
     Move,
     Resize,
     BorderRadius,
+    Edit3D,
 }
 
 // Component Fuctions
@@ -120,6 +132,12 @@ pub struct EditableElement {
     is_eidting_radius_bottomleft: bool,
     is_eidting_radius_bottomright: bool,
     is_editing_radius_linked: bool,
+
+    is_editing_3d: bool,
+    is_editing_3d_rotate_x: bool,
+    is_editing_3d_rotate_y: bool,
+    is_editing_3d_rotate_z: bool,
+    
 
     is_selected: bool,
 
@@ -173,6 +191,11 @@ impl Component for EditableElement {
             is_eidting_radius_topright: false,
             is_editing_radius_linked: true,
 
+            is_editing_3d: false,
+            is_editing_3d_rotate_x: false,
+            is_editing_3d_rotate_y: false,
+            is_editing_3d_rotate_z: false,
+
             is_selected: false,
         }
     }
@@ -212,12 +235,11 @@ impl Component for EditableElement {
                     ctx.link().send_message(Msg::Select);
                 }
 
-                // element that dispatched the original event
-                let target = e.target_dyn_into::<HtmlElement>().unwrap();
+                let target = e.target_dyn_into::<Element>().unwrap();
 
-                match target.id().as_str() {
+                match target.get_attribute("jrole").unwrap_or_default().as_str() {
                     // start editing border radius
-                    "rusty-css_EditableBorderRadiusSelector" => {
+                    "Judit_EditableBorderRadiusSelector" => {
                         // endable editing the radius
                         self.is_eidting_radius = true;
                         self.editing_state = EditStates::BorderRadius;
@@ -241,7 +263,7 @@ impl Component for EditableElement {
                             }
                         }
                     }
-                    "rusty-css_EditableElement" => {
+                    "Judit_EditableElement" => {
 
                         // determine wether the border has been clicked or the box
                         let resize_range = 10;
@@ -274,8 +296,24 @@ impl Component for EditableElement {
                             self.editing_state = EditStates::Move;
                         }
                     }
+                    // 3D Transforms
+                    "Judit_Transform3DToggle" => {
+                        self.is_editing_3d = true;
+                    }
+                    "Judit_Transform3DSelector_Rotate_X" => {
+                        self.editing_state = EditStates::Edit3D;
+                        self.is_editing_3d_rotate_x = true;
+                    }
+                    "Judit_Transform3DSelector_Rotate_Y" => {
+                        self.editing_state = EditStates::Edit3D;
+                        self.is_editing_3d_rotate_y = true;
+                    }
+                    "Judit_Transform3DSelector_Rotate_Z" => {
+                        self.editing_state = EditStates::Edit3D;
+                        self.is_editing_3d_rotate_z = true;
+                    }
                     &_ => {
-                        info!("event target doesn't have an id!")
+                        info!("event target doesn't have a supported jrole! jrole found: '{}'", target.get_attribute("jrole").unwrap());
                     }
                 }
 
@@ -283,8 +321,10 @@ impl Component for EditableElement {
             }
             Msg::StopEditingWithCursor(e) => {
                 e.prevent_default();
-                self.is_movable = false;
+
                 self.editing_state = EditStates::None;
+
+                self.is_movable = false;
 
                 self.is_resizeable = false;
                 self.is_resizeable_bottom = false;
@@ -294,11 +334,14 @@ impl Component for EditableElement {
                 
 
                 self.is_eidting_radius = false;
-                self.editing_state = EditStates::None;
                 self.is_eidting_radius_topleft = false;
                 self.is_eidting_radius_topright = false;
                 self.is_eidting_radius_bottomleft = false;
                 self.is_eidting_radius_bottomright = false;
+
+                self.is_editing_3d_rotate_x = false;
+                self.is_editing_3d_rotate_y = false;
+                self.is_editing_3d_rotate_z = false;
 
                 false
             }
@@ -402,6 +445,22 @@ impl Component for EditableElement {
 
                         
                     }
+                    EditStates::Edit3D => {
+                        if self.is_editing_3d {
+                            if self.is_editing_3d_rotate_x {
+                                let relative_x_rotation: f64 = self.style.transform.rotateX.try_to_f64().unwrap() + f64::from(offset_x) + f64::from(offset_y);
+                                self.style.transform.rotateX = format!("{}deg", relative_x_rotation.trunc());
+                            }
+                            if self.is_editing_3d_rotate_y {
+                                let relative_y_rotation: f64 = self.style.transform.rotateY.try_to_f64().unwrap() + f64::from(offset_x) + f64::from(offset_y);
+                                self.style.transform.rotateY = format!("{}deg", relative_y_rotation.trunc());
+                            }
+                            if self.is_editing_3d_rotate_z {
+                                let relative_z_rotation: f64 = self.style.transform.rotateZ.try_to_f64().unwrap() + f64::from(offset_x) + f64::from(offset_y);
+                                self.style.transform.rotateZ = format!("{}deg", relative_z_rotation.trunc());
+                            }
+                        }
+                    }
                     EditStates::None => {
 
                     }
@@ -440,7 +499,7 @@ impl Component for EditableElement {
         }
 
         html! {
-            <div id = { "rusty-css_EditableElement" } 
+            <div jrole = { "Judit_EditableElement" } 
                 onclick = { link.callback( |_| Msg::Select )}
                 onmousedown = { link.callback( |e| Msg::StartEditingWithCursor(e) )}
                 onmouseup = { link.callback( |e| Msg::StopEditingWithCursor(e) )}
@@ -460,6 +519,11 @@ impl Component for EditableElement {
                         <EditableBorderRadiusSelector 
                             position = {ebrsPositions::BottomRight}
                             border = { self.border_selector_style_bottomright.clone() }/>
+                        if self. is_editing_3d {
+                            <Transform3DSelector/>
+                        } else {
+                            <Transform3DToggle/>   
+                        }
                     }
             </div>
         }

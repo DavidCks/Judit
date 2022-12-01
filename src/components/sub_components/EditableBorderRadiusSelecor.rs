@@ -159,7 +159,7 @@ impl Component for EditableBorderRadiusSelector {
         html! {
             <div 
             position = { format!("{:?}", ctx.props().position) }
-            id = {"rusty-css_EditableBorderRadiusSelector"}
+            jrole = {"Judit_EditableBorderRadiusSelector"}
             class = { hover_class.unwrap() }
             style = { self.style.inline() }>
             </div>

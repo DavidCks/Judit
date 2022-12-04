@@ -16,6 +16,7 @@ use super::sub_components::EditableBorderRadiusSelecor::BorderSelectorStyle;
 
 use super::sub_components::Transform3DSelector::Transform3DSelector as Transform3DSelector;
 use super::sub_components::Transform3DToggle::Transform3DToggle as Transform3DToggle;
+use super::sub_components::Transform2DToggle::Transform2DToggle as Transform2DToggle;
 
 // external styles
 use super::static_styles::Selected::Selected as SelectedStyle;
@@ -60,8 +61,8 @@ impl Style for ComponentStyle {
             Self {
                 position: "absolute",
                 box_sizing: "border-box",
-                top: "0px",
-                left: "0px",
+                top: "10px",
+                left: "50px",
                 width: "100px",
                 height: "100px",
                 background_color: "lightgray",
@@ -312,6 +313,9 @@ impl Component for EditableElement {
                         self.editing_state = EditStates::Edit3D;
                         self.is_editing_3d_rotate_z = true;
                     }
+                    "Judit_Transform2DToggle" => {
+                        self.is_editing_3d = false;
+                    }
                     &_ => {
                         info!("event target doesn't have a supported jrole! jrole found: '{}'", target.get_attribute("jrole").unwrap());
                     }
@@ -448,7 +452,7 @@ impl Component for EditableElement {
                     EditStates::Edit3D => {
                         if self.is_editing_3d {
                             if self.is_editing_3d_rotate_x {
-                                let relative_x_rotation: f64 = self.style.transform.rotateX.try_to_f64().unwrap() + f64::from(offset_x) + f64::from(offset_y);
+                                let relative_x_rotation: f64 = self.style.transform.rotateX.try_to_f64().unwrap() - f64::from(offset_x) - f64::from(offset_y);
                                 self.style.transform.rotateX = format!("{}deg", relative_x_rotation.trunc());
                             }
                             if self.is_editing_3d_rotate_y {
@@ -520,6 +524,7 @@ impl Component for EditableElement {
                             position = {ebrsPositions::BottomRight}
                             border = { self.border_selector_style_bottomright.clone() }/>
                         if self. is_editing_3d {
+                            <Transform2DToggle/>
                             <Transform3DSelector/>
                         } else {
                             <Transform3DToggle/>   

@@ -8,6 +8,7 @@ use rusty_css::*;
 mod components;
 pub use components::{ EditableElement::* };
 pub use components::EditableElement::Msg as CMsg;
+pub use components::Toolbar::Toolbar as Toolbar;
 
 pub enum Msg {
     ReceiveSelectedChildLink(Scope<EditableElement>),
@@ -101,15 +102,18 @@ impl Component for App {
         let class_name = self.style.as_class(&document);
 
         html! {
-            <main
-                onmousemove = { link.callback( |e| Msg::PropagateCursorMove(e) )}
-                onmouseup = { link.callback( |e| Msg::StopAllEditing(e) )}
-                class = { class_name.unwrap_or_default() }>
-                <EditableElement />
-                <EditableElement />
-                <EditableElement />
-                //add component that grabs the style tag, adds content-editable + display: block so it can be live edited
-            </main>
+            <>
+                <main
+                    onmousemove = { link.callback( |e| Msg::PropagateCursorMove(e) )}
+                    onmouseup = { link.callback( |e| Msg::StopAllEditing(e) )}
+                    class = { class_name.unwrap_or_default() }>
+                    <EditableElement />
+                    <EditableElement />
+                    <EditableElement />
+                    //add component that grabs the style tag, adds content-editable + display: block so it can be live edited
+                </main>
+                <Toolbar />
+            </>
         }
     }
 }

@@ -1,12 +1,12 @@
 use std::str::FromStr;
 
-use log::{ info, error };
+use log::{ info };
 //use log::info;
 use yew::{prelude::*};
 use yew::html::Scope;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
-use web_sys::{ MouseEvent, HtmlElement, SvgElement, Element };
+use web_sys::{ MouseEvent,  Element };
 use rusty_css::*;
 use super::super::Msg as PMsg;
 
@@ -15,8 +15,9 @@ use super::sub_components::EditableBorderRadiusSelecor::Positions as ebrsPositio
 use super::sub_components::EditableBorderRadiusSelecor::BorderSelectorStyle;
 
 use super::sub_components::Transform3DSelector::Transform3DSelector as Transform3DSelector;
-use super::sub_components::Transform3DToggle::Transform3DToggle as Transform3DToggle;
-use super::sub_components::Transform2DToggle::Transform2DToggle as Transform2DToggle;
+use super::sub_components::edit_controls::EditControls::EditControls as EditControls;
+use super::sub_components::edit_controls::Transform3DToggle::Transform3DToggle as Transform3DToggle;
+use super::sub_components::edit_controls::Transform2DToggle::Transform2DToggle as Transform2DToggle;
 
 // external styles
 use super::static_styles::Selected::Selected as SelectedStyle;
@@ -132,7 +133,6 @@ pub struct EditableElement {
     is_eidting_radius_topright: bool,
     is_eidting_radius_bottomleft: bool,
     is_eidting_radius_bottomright: bool,
-    is_editing_radius_linked: bool,
 
     is_editing_3d: bool,
     is_editing_3d_rotate_x: bool,
@@ -190,7 +190,6 @@ impl Component for EditableElement {
             is_eidting_radius_bottomright: false,
             is_eidting_radius_topleft: false,
             is_eidting_radius_topright: false,
-            is_editing_radius_linked: true,
 
             is_editing_3d: false,
             is_editing_3d_rotate_x: false,
@@ -247,19 +246,15 @@ impl Component for EditableElement {
 
                         match ebrsPositions::from_str( &target.get_attribute("position").unwrap() ).unwrap() {
                             ebrsPositions::TopLeft => {
-                                info!("topleft");
                                 self.is_eidting_radius_topleft = true;
                             }
                             ebrsPositions::TopRight => {
-                                info!("topright");
                                 self.is_eidting_radius_topright = true;
                             }
                             ebrsPositions::BottomLeft => {
-                                info!("bottomleft");
                                 self.is_eidting_radius_bottomleft = true;
                             }
                             ebrsPositions::BottomRight => {
-                                info!("bottomright");
                                 self.is_eidting_radius_bottomright = true;
                             }
                         }
@@ -524,11 +519,16 @@ impl Component for EditableElement {
                             position = {ebrsPositions::BottomRight}
                             border = { self.border_selector_style_bottomright.clone() }/>
                         if self. is_editing_3d {
-                            <Transform2DToggle/>
                             <Transform3DSelector/>
-                        } else {
-                            <Transform3DToggle/>   
                         }
+                        // Edit Controls below the EditableElements
+                        <EditControls>
+                            if self. is_editing_3d {
+                                <Transform2DToggle/>
+                            } else {
+                                <Transform3DToggle/>
+                            }
+                        </EditControls>
                     }
             </div>
         }

@@ -4,7 +4,6 @@ use rusty_css::*;
 use yew::{prelude::*};
 use web_sys::{ window };
 use bevy_reflect::{ Reflect };
-use std::str::FromStr;
 use strum_macros::EnumString;
 use append_to_string::*;
 

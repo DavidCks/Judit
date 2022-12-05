@@ -3,6 +3,7 @@ use yew::prelude::*;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
 
+#[allow(non_snake_case)]
 #[derive(Reflect)]
 struct Transform {
     rotateX: String,
@@ -50,7 +51,7 @@ impl Component for Transform3DSelector {
     type Message = Msg;
     type Properties = ();
 
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
 
         let radius = 40;
         let mut style = Transform3DSelectorStyle::create();
@@ -64,7 +65,7 @@ impl Component for Transform3DSelector {
         }
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
 
         let faning = 87; //deg
         let rotation_disc_base_style = "transform-origin: 50% 50%; position: absolute; opacity: .5;";

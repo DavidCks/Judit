@@ -1,5 +1,6 @@
+// use log::info;
 use yew::prelude::*;
-use yew::html::Scope;
+use yew::html::{Scope};
 use web_sys::{ MouseEvent, window };
 use append_to_string::*;
 use bevy_reflect::{ Reflect };
@@ -9,13 +10,6 @@ mod components;
 pub use components::{ EditableElement::* };
 pub use components::EditableElement::Msg as CMsg;
 pub use components::Toolbar::Toolbar as Toolbar;
-
-pub enum Msg {
-    ReceiveSelectedChildLink(Scope<EditableElement>),
-    ReceiveChildrenLink(Scope<EditableElement>),
-    PropagateCursorMove(MouseEvent),
-    StopAllEditing(MouseEvent),
-}
 
 #[derive(Reflect)]
 struct CanvasStyle {
@@ -43,10 +37,20 @@ impl Style for CanvasStyle {
         )
     }
 }
+
+pub enum Msg {
+    ReceiveSelectedChildLink(Scope<EditableElement>),
+    ReceiveChildrenLink(Scope<EditableElement>),
+    PropagateCursorMove(MouseEvent),
+    StopAllEditing(MouseEvent),
+    AddElement,
+}
+
 struct App {
     style: CanvasStyle,
-    children: Vec<Scope<EditableElement>>,
+    children_links: Vec<Scope<EditableElement>>,
     selected_child: Option<Scope<EditableElement>>,
+    children: Vec<Html>,
 }
 
 impl Component for App {
@@ -54,10 +58,12 @@ impl Component for App {
     type Message = Msg;
 
     fn create(_ctx: &Context<Self>) -> Self {
+
         Self {
             style: CanvasStyle::create(),
-            children: Vec::new(),
+            children_links: Vec::new(),
             selected_child: None,
+            children: vec!( html!( <EditableElement/> ) ),
         }
     }
 
@@ -72,7 +78,7 @@ impl Component for App {
                 false
             }
             Msg::ReceiveChildrenLink(child_scope) => {
-                self.children.push(child_scope);
+                self.children_links.push(child_scope);
                 false
             }
             Msg::PropagateCursorMove(e) => {
@@ -88,6 +94,10 @@ impl Component for App {
                     link.send_message(CMsg::StopEditingWithCursor(e));
                 }
                 false
+            }
+            Msg::AddElement => {
+                self.children.push( html!( <EditableElement/> ) );
+                true
             }
         }
     }
@@ -107,9 +117,7 @@ impl Component for App {
                     onmousemove = { link.callback( |e| Msg::PropagateCursorMove(e) )}
                     onmouseup = { link.callback( |e| Msg::StopAllEditing(e) )}
                     class = { class_name.unwrap_or_default() }>
-                    <EditableElement />
-                    <EditableElement />
-                    <EditableElement />
+                    { for self.children.clone().into_iter() }
                     //add component that grabs the style tag, adds content-editable + display: block so it can be live edited
                 </main>
                 <Toolbar />

@@ -1,9 +1,11 @@
 use rusty_css::*;
 use yew::prelude::*;
+use yew::html::Scope;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
 
 use crate::App;
+use crate::Msg as PMsg;
 
 #[allow(non_snake_case)]
 #[derive(Reflect, Clone)]
@@ -34,7 +36,8 @@ impl Style for ToolbarStyle {
 }
 
 pub struct Toolbar {
-   style: ToolbarStyle
+   style: ToolbarStyle,
+   parent_link: Scope<App>
 }
 
 pub enum Msg {
@@ -45,21 +48,23 @@ impl Component for Toolbar {
     type Message = Msg;
     type Properties = ();
 
-    fn create(_ctx: &Context<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
         Self {
             style: ToolbarStyle::create(),
+            parent_link: ctx.link().get_parent().unwrap().clone().downcast::<App>(),
         }
     }
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::AddElement => {
+                self.parent_link.send_message(PMsg::AddElement);
                 false
             }
         }
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         
         let li_style = "line-height: 0px; padding: 2.5px 0 2.5px 0;";
 
@@ -70,6 +75,9 @@ impl Component for Toolbar {
         let jrole_toolbar_divider = "jrole=\"Judit_Toolbar_Divider\"";
         let jrole_toolbar_addcomponent = "jrole=\"Judit_Toolbar_AddComponent\"";
 
+        let link = ctx.link();
+        let add_element_onclick = link.callback(|_| Msg::AddElement );
+
         html! {
             <ul style={ self.style.clone().inline() }>
                 // Cursor
@@ -79,7 +87,7 @@ impl Component for Toolbar {
                     </svg>
                 </li>
                 // Add Element
-                <li style={ li_style } jrole={ jrole_toolbar_addelement }>
+                <li onclick = { add_element_onclick } style={ li_style } jrole={ jrole_toolbar_addelement }>
                     <svg width={ self.style.width.clone() } height={ self.style.width.clone() } jrole={ jrole_toolbar_addelement } stroke_width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000">
                         <path jrole={ jrole_toolbar_addelement } d="M21 3.6v16.8a.6.6 0 01-.6.6H3.6a.6.6 0 01-.6-.6V3.6a.6.6 0 01.6-.6h16.8a.6.6 0 01.6.6z" stroke="#000000" stroke_width="1.5" stroke_linecap="round" stroke_linejoin="round"></path>
                     </svg>

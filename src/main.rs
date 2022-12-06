@@ -13,7 +13,8 @@ pub use components::Toolbar::Toolbar as Toolbar;
 #[derive(Reflect)]
 struct CanvasStyle {
     margin: String, 
-    height: String,
+    min_height: String,
+    min_width: String,
     width: String,
     background_color: String,
     opacity: String,
@@ -26,8 +27,9 @@ impl Style for CanvasStyle {
         append_to_string!( 
             Self {
                 margin: "-8px", 
-                height: "100vh",
-                width: "100vw",
+                min_height: "100vh",
+                min_width: "100vw",
+                width: "auto",
                 background_color: "#f9f9f9",
                 opacity: "1",
                 background_image: "radial-gradient(#b1b1b1 1px, #f9f9f9 1px)",

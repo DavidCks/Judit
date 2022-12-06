@@ -1,4 +1,3 @@
-// use log::info;
 use yew::prelude::*;
 use yew::html::{Scope};
 use web_sys::{ MouseEvent, window };
@@ -63,7 +62,7 @@ impl Component for App {
             style: CanvasStyle::create(),
             children_links: Vec::new(),
             selected_child: None,
-            children: vec!( html!( <EditableElement/> ) ),
+            children: vec!( html!(<EditableElement />) ),
         }
     }
 
@@ -96,7 +95,7 @@ impl Component for App {
                 false
             }
             Msg::AddElement => {
-                self.children.push( html!( <EditableElement/> ) );
+                self.children.push( html!(<EditableElement />) ); 
                 true
             }
         }
@@ -117,7 +116,7 @@ impl Component for App {
                     onmousemove = { link.callback( |e| Msg::PropagateCursorMove(e) )}
                     onmouseup = { link.callback( |e| Msg::StopAllEditing(e) )}
                     class = { class_name.unwrap_or_default() }>
-                    { for self.children.clone().into_iter() }
+                    { for self.children.clone().into_iter()  }
                     //add component that grabs the style tag, adds content-editable + display: block so it can be live edited
                 </main>
                 <Toolbar />

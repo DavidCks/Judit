@@ -15,6 +15,7 @@ use super::sub_components::EditableBorderRadiusSelecor::Positions as ebrsPositio
 use super::sub_components::EditableBorderRadiusSelecor::BorderSelectorStyle;
 
 use super::sub_components::Transform3DSelector::Transform3DSelector as Transform3DSelector;
+use super::sub_components::DeleteButton::DeleteButton as DeleteButton;
 use super::sub_components::edit_controls::EditControls::EditControls as EditControls;
 use super::sub_components::edit_controls::Transform3DToggle::Transform3DToggle as Transform3DToggle;
 use super::sub_components::edit_controls::Transform2DToggle::Transform2DToggle as Transform2DToggle;
@@ -105,6 +106,10 @@ pub enum Msg {
 
     Select,
     Deselect,
+    Delete,
+
+    Transform3DToggle,
+    Transform2DToggle,
 }
 
 pub struct EditableElement {
@@ -139,8 +144,8 @@ pub struct EditableElement {
     is_editing_3d_rotate_y: bool,
     is_editing_3d_rotate_z: bool,
     
-
     is_selected: bool,
+    render: bool,
 
     // state
     previous_mouse_x: Option<i32>,
@@ -197,6 +202,7 @@ impl Component for EditableElement {
             is_editing_3d_rotate_z: false,
 
             is_selected: false,
+            render: true,
         }
     }
 
@@ -221,6 +227,19 @@ impl Component for EditableElement {
                 // reset previous mouse position
                 self.previous_mouse_x = None;
                 self.previous_mouse_y = None;
+                true
+            }
+            Msg::Delete => {
+                self.render = false;
+                true
+            }
+            // 3D Transform enable / disable
+            Msg::Transform3DToggle => {
+                self.is_editing_3d = true;
+                true
+            }
+            Msg::Transform2DToggle => {
+                self.is_editing_3d = false;
                 true
             }
             Msg::StartEditingWithCursor(e) => {
@@ -292,10 +311,7 @@ impl Component for EditableElement {
                             self.editing_state = EditStates::Move;
                         }
                     }
-                    // 3D Transforms
-                    "Judit_Transform3DToggle" => {
-                        self.is_editing_3d = true;
-                    }
+                    // 3D Rotates
                     "Judit_Transform3DSelector_Rotate_X" => {
                         self.editing_state = EditStates::Edit3D;
                         self.is_editing_3d_rotate_x = true;
@@ -308,11 +324,14 @@ impl Component for EditableElement {
                         self.editing_state = EditStates::Edit3D;
                         self.is_editing_3d_rotate_z = true;
                     }
-                    "Judit_Transform2DToggle" => {
-                        self.is_editing_3d = false;
-                    }
                     &_ => {
-                        info!("event target doesn't have a supported jrole! jrole found: '{}'", target.get_attribute("jrole").unwrap());
+                        if let Some(jrole) = target.get_attribute("jrole") {
+                            info!("unused jrole. jrole found: '{}'", jrole);
+                        } else {
+                            info!("No jrole attribute found.\n
+                            only control elements that edit the selected element via mouse movenments (while the mouse is clicked) on the Canvas need a jrole.\n
+                            while that might not be necessary for every element it is best to assign one just as a precaution for possible future implementations.");
+                        }
                     }
                 }
 
@@ -483,6 +502,8 @@ impl Component for EditableElement {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
+        if !self.render { return html!(<></>); }
+
         // This gives us a component's "`Scope`" which allows us to send messages, etc to the component.
         let link = ctx.link();
         
@@ -498,35 +519,37 @@ impl Component for EditableElement {
         }
 
         html! {
-            <div jrole = { "Judit_EditableElement" } 
+            <div jrole = { "Judit_EditableElement" }
                 onclick = { link.callback( |_| Msg::Select )}
                 onmousedown = { link.callback( |e| Msg::StartEditingWithCursor(e) )}
                 onmouseup = { link.callback( |e| Msg::StopEditingWithCursor(e) )}
                 style={ style }>
-                    if self.is_selected && 
-                       self.style.width.try_to_f64().unwrap() > 20_f64 && 
-                       self.style.height.try_to_f64().unwrap() > 20_f64 {
-                        <EditableBorderRadiusSelector 
-                            position = {ebrsPositions::TopLeft} 
-                            border = { self.border_selector_style_topleft.clone() }/>
-                        <EditableBorderRadiusSelector 
-                            position = {ebrsPositions::TopRight}
-                            border = { self.border_selector_style_topright.clone() }/>
-                        <EditableBorderRadiusSelector 
-                            position = {ebrsPositions::BottomLeft}
-                            border = { self.border_selector_style_bottomleft.clone() }/>
-                        <EditableBorderRadiusSelector 
-                            position = {ebrsPositions::BottomRight}
-                            border = { self.border_selector_style_bottomright.clone() }/>
-                        if self. is_editing_3d {
-                            <Transform3DSelector/>
+                    if self.is_selected {
+                        if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
+                            <EditableBorderRadiusSelector 
+                                position = {ebrsPositions::TopLeft} 
+                                border = { self.border_selector_style_topleft.clone() }/>
+                            <EditableBorderRadiusSelector 
+                                position = {ebrsPositions::TopRight}
+                                border = { self.border_selector_style_topright.clone() }/>
+                            <EditableBorderRadiusSelector 
+                                position = {ebrsPositions::BottomLeft}
+                                border = { self.border_selector_style_bottomleft.clone() }/>
+                            <EditableBorderRadiusSelector 
+                                position = {ebrsPositions::BottomRight}
+                                border = { self.border_selector_style_bottomright.clone() }/>
+                            if self. is_editing_3d {
+                                <Transform3DSelector/>
+                            }
                         }
+                        
+                        <DeleteButton onclick={ link.callback(|_| Msg::Delete )} />
                         // Edit Controls below the EditableElements
                         <EditControls>
                             if self. is_editing_3d {
-                                <Transform2DToggle/>
+                                <Transform2DToggle onclick={link.callback(|_| Msg::Transform2DToggle )} />
                             } else {
-                                <Transform3DToggle/>
+                                <Transform3DToggle onclick={link.callback(|_| Msg::Transform3DToggle )} />
                             }
                         </EditControls>
                     }

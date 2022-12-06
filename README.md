@@ -12,3 +12,6 @@
 That's it! <span style="font-size: 80%; margin">(if you already have all the prerequisits)</span><br>
 ------
 <p>If not consult the <a href="https://yew.rs/docs/0.19.0/getting-started/introduction">yew documentation</a></p>
+
+------
+The icons are from <a href="https://iconoir.com/">https://iconoir.com/</a>

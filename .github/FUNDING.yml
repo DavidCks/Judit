@@ -10,4 +10,4 @@ liberapay: # Replace with a single Liberapay username
 issuehunt: # Replace with a single IssueHunt username
 otechie: # Replace with a single Otechie username
 lfx_crowdfunding: # Replace with a single LFX Crowdfunding project-name e.g., cloud-foundry
-custom: ['0xd305Ea46f0B3a92eFA39C21c77EEA99123cA902b']
+custom: ['be the first!', 'https://etherscan.io/address/0xd305Ea46f0B3a92eFA39C21c77EEA99123cA902b', 'https://polygonexplorer.com/address/0xd305Ea46f0B3a92eFA39C21c77EEA99123cA902b']

@@ -16,10 +16,7 @@ struct CanvasStyle {
     min_height: String,
     min_width: String,
     width: String,
-    background_color: String,
     opacity: String,
-    background_image: String,
-    background_size: String,
 }
 
 impl Style for CanvasStyle {
@@ -30,10 +27,7 @@ impl Style for CanvasStyle {
                 min_height: "100vh",
                 min_width: "100vw",
                 width: "auto",
-                background_color: "#f9f9f9",
                 opacity: "1",
-                background_image: "radial-gradient(#b1b1b1 1px, #f9f9f9 1px)",
-                background_size: "20px 20px",
             }
         )
     }

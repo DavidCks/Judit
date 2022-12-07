@@ -68,25 +68,28 @@ impl Component for Transform3DSelector {
     fn view(&self, _ctx: &Context<Self>) -> Html {
 
         let faning = 87; //deg
-        let rotation_disc_base_style = "transform-origin: 50% 50%; position: absolute; opacity: .5;";
+        let rotation_disc_base_style = "transform-origin: 50% 50%; position: absolute;";
+        let red_base_style = "opacity: .33;";
+        let blue_base_style = "opacity: .33;";
+        let green_base_style = "opacity: .5;";
 
         // x-axis
-        let x1_style = format!("{} transform: rotateY(90deg) rotateX({}deg);", rotation_disc_base_style, faning);
-        let x2_style = format!("{} transform: rotateY(180deg) rotateX({}deg);", rotation_disc_base_style, faning);
-        let x3_style = format!("{} transform: rotateY(270deg) rotateX({}deg);", rotation_disc_base_style, faning);
-        let x4_style = format!("{} transform: rotateY(360deg) rotateX({}deg);", rotation_disc_base_style, faning);
+        let x1_style = format!("{} {} transform: rotateY(90deg) rotateX({}deg);", rotation_disc_base_style, red_base_style, faning);
+        let x2_style = format!("{} {} transform: rotateY(180deg) rotateX({}deg);", rotation_disc_base_style, red_base_style, faning);
+        let x3_style = format!("{} {} transform: rotateY(270deg) rotateX({}deg);", rotation_disc_base_style, red_base_style, faning);
+        let x4_style = format!("{} {} transform: rotateY(360deg) rotateX({}deg);", rotation_disc_base_style, red_base_style, faning);
 
         // y-axis
-        let y1_style = format!("{} transform: rotateX(90deg) rotateY({}deg);", rotation_disc_base_style, faning);
-        let y2_style = format!("{} transform: rotateX(180deg) rotateY({}deg);", rotation_disc_base_style, faning);
-        let y3_style = format!("{} transform: rotateX(270deg) rotateY({}deg);", rotation_disc_base_style, faning);
-        let y4_style = format!("{} transform: rotateX(360deg) rotateY({}deg);", rotation_disc_base_style, faning);
+        let y1_style = format!("{} {} transform: rotateX(90deg) rotateY({}deg);", rotation_disc_base_style, blue_base_style, faning);
+        let y2_style = format!("{} {} transform: rotateX(180deg) rotateY({}deg);", rotation_disc_base_style, blue_base_style, faning);
+        let y3_style = format!("{} {} transform: rotateX(270deg) rotateY({}deg);", rotation_disc_base_style, blue_base_style, faning);
+        let y4_style = format!("{} {} transform: rotateX(360deg) rotateY({}deg);", rotation_disc_base_style, blue_base_style, faning);
 
         // z-axis
-        let z1_style = format!("{} transform: rotateZ(90deg) rotateY({}deg);", rotation_disc_base_style, faning - 90);
-        let z2_style = format!("{} transform: rotateZ(180deg) rotateY({}deg);", rotation_disc_base_style, faning - 90);
-        let z3_style = format!("{} transform: rotateZ(270deg) rotateY({}deg);", rotation_disc_base_style, faning - 90);
-        let z4_style = format!("{} transform: rotateZ(360deg) rotateY({}deg);", rotation_disc_base_style, faning - 90);
+        let z1_style = format!("{} {} transform: rotateZ(90deg) rotateY({}deg);", rotation_disc_base_style, green_base_style, faning - 90);
+        let z2_style = format!("{} {} transform: rotateZ(180deg) rotateY({}deg);", rotation_disc_base_style, green_base_style, faning - 90);
+        let z3_style = format!("{} {} transform: rotateZ(270deg) rotateY({}deg);", rotation_disc_base_style, green_base_style, faning - 90);
+        let z4_style = format!("{} {} transform: rotateZ(360deg) rotateY({}deg);", rotation_disc_base_style, green_base_style, faning - 90);
 
         let rotate_x_jrole = "Judit_Transform3DSelector_Rotate_X";
         let rotate_y_jrole = "Judit_Transform3DSelector_Rotate_Y";

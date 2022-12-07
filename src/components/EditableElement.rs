@@ -23,7 +23,7 @@ use super::sub_components::edit_controls::Transform2DToggle::Transform2DToggle a
 use super::static_styles::Selected::Selected as SelectedStyle;
 
 #[allow(non_snake_case)]
-#[derive(Reflect)]
+#[derive(Reflect, PartialEq, Clone)]
 pub struct Transform {
     pub skewX: String,
     pub skewY: String,
@@ -551,7 +551,7 @@ impl Component for EditableElement {
                 onclick = { link.callback( |_| Msg::Select )}
                 onmousedown = { link.callback( |e| Msg::StartEditingWithCursor(e) )}
                 onmouseup = { link.callback( |e| Msg::StopEditingWithCursor(e) )}
-                style={ style.clone() }>
+                style={ style }>
                     if self.is_selected {
                         if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
                             <EditableBorderRadiusSelector 
@@ -571,7 +571,7 @@ impl Component for EditableElement {
                             }
                         }
                         
-                        <DeleteButton onclick={ link.callback(|_| Msg::Delete )}/>
+                        <DeleteButton parent_transform={ self.style.transform.clone() } onclick={ link.callback(|_| Msg::Delete )}/>
                         // Edit Controls below the EditableElements
                         <EditControls>
                             if self.is_editing_3d {

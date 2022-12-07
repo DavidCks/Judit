@@ -19,7 +19,7 @@ impl Style for EditableBorderRadiusSelectorStyle_Hover {
         append_to_string!(
             Self {
                 append: ":hover",
-                background_color: "black !important",
+                background_color: "white !important",
             }
         )
     }
@@ -50,14 +50,14 @@ impl Style for EditableBorderRadiusSelectorStyle {
         append_to_string!(
             Self {
                 position: "absolute",
-                width: "10px",
-                height: "10px",
+                width: "11px",
+                height: "11px",
                 top: "initial",
                 left: "initial",
                 right: "initial",
                 bottom: "initial",
                 background_image: "none",
-                background_color: "gray",
+                background_color: "lightgray",
                 border_radius: "",
                 border_width: "",
                 border_color: "",

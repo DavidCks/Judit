@@ -176,7 +176,7 @@ impl Component for EditableElement {
         let initial_border_selector_style = append_to_string!( 
             BorderSelectorStyle { 
                 border_width: "3px", 
-                border_color: "darkgray", 
+                border_color: "#3f3f3f", 
                 border_radius: "100%" 
             }
         );

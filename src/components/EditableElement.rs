@@ -1,6 +1,5 @@
-use std::str::FromStr;
-
 use log::{ info };
+use std::str::FromStr;
 //use log::info;
 use yew::{prelude::*};
 use yew::html::Scope;
@@ -87,6 +86,12 @@ impl Style for ComponentStyle {
     }
 }
 
+#[derive(PartialEq)]
+pub enum JTypes {
+    Div,
+    Text,
+    Image
+}
 pub enum EditStates {
     None,
     Move,
@@ -110,6 +115,14 @@ pub enum Msg {
 
     Transform3DToggle,
     Transform2DToggle,
+}
+
+#[derive(Properties, PartialEq)]
+pub struct Props {
+    #[prop_or(JTypes::Div)]
+    pub jtype: JTypes,
+    #[prop_or_default]
+    tag: String,
 }
 
 pub struct EditableElement {
@@ -153,7 +166,7 @@ pub struct EditableElement {
 }
 
 impl Component for EditableElement {
-    type Properties = ();
+    type Properties = Props;
     type Message = Msg;
 
     fn create(ctx: &Context<Self>) -> Self {
@@ -506,7 +519,7 @@ impl Component for EditableElement {
 
         // This gives us a component's "`Scope`" which allows us to send messages, etc to the component.
         let link = ctx.link();
-        
+
         //log::info!("top: {}\nmoveable: {}\nresizeable: {}\nrLeft: {}; rRight: {}; rTop{}; rBot{}; \nselected: {}\nprev_x: {}; prev_y: {};", self.style.top, self.is_movable, self.is_resizeable, self.is_resizeable_left, self.is_resizeable_right, self.is_resizeable_top, self.is_resizeable_bottom, self.is_selected, self.previous_mouse_x.unwrap_or_default(), self.previous_mouse_y.unwrap_or_default());
 
         // Base styling
@@ -517,9 +530,26 @@ impl Component for EditableElement {
         if self.is_selected {
             style.push_str(&selected_style.inline());
         }
+        // Tag based on given JType
+        let mut tag = ctx.props().tag.clone();
+        if tag.is_empty() {
+            append_to_string!(
+                match ctx.props().jtype {
+                    JTypes::Div => { 
+                        tag = "div"
+                    },
+                    JTypes::Text => {
+                        tag = "p"
+                    },
+                    JTypes::Image => {
+                        tag = "img"
+                    },
+                }
+            );
+        }
 
         html! {
-            <div jrole = { "Judit_EditableElement" }
+            <@{tag} jrole = { "Judit_EditableElement" }
                 onclick = { link.callback( |_| Msg::Select )}
                 onmousedown = { link.callback( |e| Msg::StartEditingWithCursor(e) )}
                 onmouseup = { link.callback( |e| Msg::StopEditingWithCursor(e) )}
@@ -553,7 +583,7 @@ impl Component for EditableElement {
                             }
                         </EditControls>
                     }
-            </div>
+            </@>
         }
     }
 }

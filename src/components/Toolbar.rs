@@ -42,6 +42,8 @@ pub struct Toolbar {
 
 pub enum Msg {
     AddElement,
+    AddTextElement,
+    AddImageElement,
 }
 
 impl Component for Toolbar {
@@ -58,9 +60,17 @@ impl Component for Toolbar {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::AddElement => {
-                self.parent_link.send_message(PMsg::AddElement);
+                self.parent_link.send_message(PMsg::AddElement(crate::JTypes::Div));
                 false
             }
+            Msg::AddTextElement => { 
+                self.parent_link.send_message(PMsg::AddElement(crate::JTypes::Text));
+                false
+            },
+            Msg::AddImageElement => {
+                self.parent_link.send_message(PMsg::AddElement(crate::JTypes::Image));
+                false
+            },
         }
     }
 
@@ -77,6 +87,8 @@ impl Component for Toolbar {
 
         let link = ctx.link();
         let add_element_onclick = link.callback(|_| Msg::AddElement );
+        let add_text_element_onclick = link.callback(|_| Msg::AddTextElement );
+        let add_image_element_onclick = link.callback(|_| Msg::AddImageElement );
 
         html! {
             <ul style={ self.style.clone().inline() }>
@@ -93,13 +105,13 @@ impl Component for Toolbar {
                     </svg>
                 </li>
                 // Add Text
-                <li style={ li_style } jrole={ jrole_toolbar_addtext }>
+                <li onclick = { add_text_element_onclick } style={ li_style } jrole={ jrole_toolbar_addtext }>
                     <svg width={ self.style.width.clone() } height={ self.style.width.clone() } jrole={ jrole_toolbar_addtext } stroke_width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000">
                         <path jrole={ jrole_toolbar_addtext } d="M19 7V5H5v2M12 5v14m0 0h-2m2 0h2" stroke="#000000" stroke_width="1.5" stroke_linecap="round" stroke_linejoin="round"></path>
                     </svg>
                 </li>
                 // Add Image
-                <li style={ li_style } jrole={ jrole_toolbar_addimage }>
+                <li onclick = { add_image_element_onclick } style={ li_style } jrole={ jrole_toolbar_addimage }>
                     <svg width={ self.style.width.clone() } height={ self.style.width.clone() } jrole={ jrole_toolbar_addimage } stroke_width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000">
                         <path jrole={ jrole_toolbar_addimage } d="M21 3.6v16.8a.6.6 0 01-.6.6H3.6a.6.6 0 01-.6-.6V3.6a.6.6 0 01.6-.6h16.8a.6.6 0 01.6.6z" stroke="#000000" stroke_width="1.5" stroke_linecap="round" stroke-linejoin="round"></path><path d="M3 16l7-3 11 5M16 10a2 2 0 110-4 2 2 0 010 4z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
                     </svg>

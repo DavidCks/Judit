@@ -8,6 +8,7 @@ use rusty_css::*;
 mod components;
 pub use components::{ EditableElement::* };
 pub use components::EditableElement::Msg as CMsg;
+pub use components::EditableElement::JTypes as JTypes;
 pub use components::Toolbar::Toolbar as Toolbar;
 
 #[derive(Reflect)]
@@ -38,7 +39,7 @@ pub enum Msg {
     ReceiveChildrenLink(Scope<EditableElement>),
     PropagateCursorMove(MouseEvent),
     StopAllEditing(MouseEvent),
-    AddElement,
+    AddElement(JTypes),
 }
 
 struct App {
@@ -90,8 +91,8 @@ impl Component for App {
                 }
                 false
             }
-            Msg::AddElement => {
-                self.children.push( html!(<EditableElement />) ); 
+            Msg::AddElement(jtype) => {
+                self.children.push( html!(<EditableElement jtype={jtype}/>) ); 
                 true
             }
         }

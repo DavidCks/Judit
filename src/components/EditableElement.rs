@@ -24,13 +24,13 @@ use super::static_styles::Selected::Selected as SelectedStyle;
 
 #[allow(non_snake_case)]
 #[derive(Reflect)]
-struct Transform {
-    skewX: String,
-    skewY: String,
-    translateX: String,
-    rotateX: String,
-    rotateY: String,
-    rotateZ: String,
+pub struct Transform {
+    pub skewX: String,
+    pub skewY: String,
+    pub translateX: String,
+    pub rotateX: String,
+    pub rotateY: String,
+    pub rotateZ: String,
 }
 
 #[allow(non_snake_case)]
@@ -520,10 +520,8 @@ impl Component for EditableElement {
         // This gives us a component's "`Scope`" which allows us to send messages, etc to the component.
         let link = ctx.link();
 
-        //log::info!("top: {}\nmoveable: {}\nresizeable: {}\nrLeft: {}; rRight: {}; rTop{}; rBot{}; \nselected: {}\nprev_x: {}; prev_y: {};", self.style.top, self.is_movable, self.is_resizeable, self.is_resizeable_left, self.is_resizeable_right, self.is_resizeable_top, self.is_resizeable_bottom, self.is_selected, self.previous_mouse_x.unwrap_or_default(), self.previous_mouse_y.unwrap_or_default());
-
         // Base styling
-        let mut style = format!("{}",  self.style.inline());
+        let mut style = self.style.inline();
 
         // Conditional styling based on state
         let selected_style = SelectedStyle::create();
@@ -542,7 +540,7 @@ impl Component for EditableElement {
                         tag = "p"
                     },
                     JTypes::Image => {
-                        tag = "img"
+                        tag = "picture"
                     },
                 }
             );
@@ -553,7 +551,7 @@ impl Component for EditableElement {
                 onclick = { link.callback( |_| Msg::Select )}
                 onmousedown = { link.callback( |e| Msg::StartEditingWithCursor(e) )}
                 onmouseup = { link.callback( |e| Msg::StopEditingWithCursor(e) )}
-                style={ style }>
+                style={ style.clone() }>
                     if self.is_selected {
                         if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
                             <EditableBorderRadiusSelector 
@@ -573,10 +571,10 @@ impl Component for EditableElement {
                             }
                         }
                         
-                        <DeleteButton onclick={ link.callback(|_| Msg::Delete )} />
+                        <DeleteButton onclick={ link.callback(|_| Msg::Delete )}/>
                         // Edit Controls below the EditableElements
                         <EditControls>
-                            if self. is_editing_3d {
+                            if self.is_editing_3d {
                                 <Transform2DToggle onclick={link.callback(|_| Msg::Transform2DToggle )} />
                             } else {
                                 <Transform3DToggle onclick={link.callback(|_| Msg::Transform3DToggle )} />

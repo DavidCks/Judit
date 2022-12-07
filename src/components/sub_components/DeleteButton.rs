@@ -3,6 +3,8 @@ use yew::prelude::*;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
 
+use crate::components::EditableElement::Transform;
+
 #[allow(non_snake_case)]
 #[derive(Reflect)]
 struct DeleteButtonStyle {
@@ -11,6 +13,7 @@ struct DeleteButtonStyle {
     height: String,
     right: String,
     top: String,
+    transform: Transform,
 }
 
 impl Style for DeleteButtonStyle {
@@ -25,6 +28,14 @@ impl Style for DeleteButtonStyle {
                 height: width.clone(),
                 right: "-5px",
                 top: format!("calc(-{} - 2px)", width),
+                transform: Transform { 
+                    skewX: "0deg",
+                    skewY: "0deg",
+                    translateX: "0px",
+                    rotateX: "0deg",
+                    rotateY: "0deg",
+                    rotateZ: "0deg",
+                },
             }
         )
     }
@@ -48,8 +59,10 @@ impl Component for DeleteButton {
     type Properties = DeleteButtonProps;
 
     fn create(_ctx: &Context<Self>) -> Self {
+        let style = DeleteButtonStyle::create();
+        
         Self {
-            style: DeleteButtonStyle::create(),
+            style: style,
         }
     }
 

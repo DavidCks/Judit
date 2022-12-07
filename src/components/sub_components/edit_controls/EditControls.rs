@@ -3,6 +3,8 @@ use yew::prelude::*;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
 
+use crate::components::EditableElement::Transform;
+
 #[allow(non_snake_case)]
 #[derive(Reflect)]
 struct EditControlsStyle {
@@ -33,17 +35,18 @@ impl Style for EditControlsStyle {
     }
 }
 
-#[derive(Properties, PartialEq)]
-pub struct EditControlsProps {
-    #[prop_or_default]
-    pub children: Children,
-}
-
 pub struct EditControls {
    style: EditControlsStyle
 }
 
 pub enum Msg {
+}
+
+#[derive(Properties, PartialEq)]
+pub struct EditControlsProps {
+    pub parent_transform: Transform,
+    #[prop_or_default]
+    pub children: Children,
 }
 
 impl Component for EditControls {
@@ -57,8 +60,13 @@ impl Component for EditControls {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
+
+        let rx = format!("rotateX({}deg)", ctx.props().parent_transform.rotateX.try_to_f64().unwrap() * -1_f64); 
+        let ry = format!("rotateY({}deg)", ctx.props().parent_transform.rotateY.try_to_f64().unwrap() * -1_f64);
+        let rz = format!("rotateZ({}deg)", ctx.props().parent_transform.rotateZ.try_to_f64().unwrap() * -1_f64);
+
         html! {
-            <div jrole="Judit_EditControls" style={ self.style.inline() } >
+            <div jrole="Judit_EditControls" style={ format!("{init_style} transform: {} {} {}", rz, ry, rx, init_style = self.style.inline()) }>
                 { for ctx.props().children.iter() }
             </div>
             

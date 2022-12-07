@@ -573,7 +573,7 @@ impl Component for EditableElement {
                         
                         <DeleteButton parent_transform={ self.style.transform.clone() } onclick={ link.callback(|_| Msg::Delete )}/>
                         // Edit Controls below the EditableElements
-                        <EditControls>
+                        <EditControls parent_transform={ self.style.transform.clone() }>
                             if self.is_editing_3d {
                                 <Transform2DToggle onclick={link.callback(|_| Msg::Transform2DToggle )} />
                             } else {

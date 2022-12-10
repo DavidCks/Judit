@@ -338,25 +338,32 @@ impl Component for EditableElement {
                         let resize_range = 10;
 
                         // horizontal resize
-                        if e.offset_x() < resize_range { // left side
+                        let offset_x = e.offset_x();
+                        if offset_x < resize_range { // left side
                             self.is_resizeable = true;
                             self.editing_state = EditStates::Resize;
                             self.is_resizeable_left = true;
-                        } else if self.style.width.try_to_f64().unwrap() - <i32 as Into<f64>>::into(resize_range) < e.offset_x().into() { // right side
-                            self.is_resizeable = true;
-                            self.editing_state = EditStates::Resize;
-                            self.is_resizeable_right = true;
+                        } else {
+                            let width = self.style.width.try_to_f64().unwrap();
+                            if width - <i32 as Into<f64>>::into(resize_range) < offset_x.into() { // right side
+                                self.is_resizeable = true;
+                                self.editing_state = EditStates::Resize;
+                                self.is_resizeable_right = true;
+                            }
                         }
 
-                        // vertical resize
-                        if e.offset_y() < resize_range { // top side
+                        let offset_y = e.offset_y();
+                        if offset_y < resize_range { // top side
                             self.is_resizeable = true;
                             self.editing_state = EditStates::Resize;
                             self.is_resizeable_top = true;
-                        } else if self.style.height.try_to_f64().unwrap() - <i32 as Into<f64>>::into(resize_range) < e.offset_y().into() { // bottom side
-                            self.is_resizeable = true;
-                            self.editing_state = EditStates::Resize;
-                            self.is_resizeable_bottom = true;
+                        } else {
+                            let height = self.style.height.try_to_f64().unwrap();
+                            if height - <i32 as Into<f64>>::into(resize_range) < offset_y.into() { // bottom side
+                                self.is_resizeable = true;
+                                self.editing_state = EditStates::Resize;
+                                self.is_resizeable_bottom = true;
+                            }
                         }
 
                         // free movement

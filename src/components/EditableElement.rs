@@ -13,11 +13,35 @@ use super::sub_components::EditableBorderRadiusSelecor::EditableBorderRadiusSele
 use super::sub_components::EditableBorderRadiusSelecor::Positions as ebrsPositions;
 use super::sub_components::EditableBorderRadiusSelecor::BorderSelectorStyle;
 
+// 3D edit ball
 use super::sub_components::Transform3DSelector::Transform3DSelector as Transform3DSelector;
+
+// Alyways visible Buttons surrounding EditableElement
 use super::sub_components::DeleteButton::DeleteButton as DeleteButton;
 use super::sub_components::edit_controls::EditControls::EditControls as EditControls;
-use super::sub_components::edit_controls::Transform3DToggle::Transform3DToggle as Transform3DToggle;
-use super::sub_components::edit_controls::Transform2DToggle::Transform2DToggle as Transform2DToggle;
+    use super::sub_components::edit_controls::Transform3DToggle::Transform3DToggle as Transform3DToggle;
+    use super::sub_components::edit_controls::Transform2DToggle::Transform2DToggle as Transform2DToggle;
+
+// Optionally visible Buttons surrounding EditableElement
+use super::sub_components::edit_tools_panel::EditToolsPanel::EditToolsPanel as EditToolsPanel;
+    use super::sub_components::edit_tools_panel::TextEditPanel::TextEditPanel as TextEditPanel;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::AlignRightButton::AlignRightButton as AlignRightButton;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::AlignCenterButton::AlignCenterButton as AlignCenterButton;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::AlignJustifyButton::AlignJustifyButton as AlignJustifyButton;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::AlignLeftButton::AlignLeftButton as AlignLeftButton;
+
+        use super::sub_components::edit_tools_panel::text_edit_buttons::StyleBoldButton::StyleBoldButton as StyleBoldButton;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::StyleItalicButton::StyleItalicButton as StyleItalicButton;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::StyleUnderlineButton::StyleUnderlineButton as StyleUnderlineButton;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::StyleSizeButton::StyleSizeButton as StyleSizeButton;
+
+        use super::sub_components::edit_tools_panel::text_edit_buttons::SpacingLinesButton::SpacingLinesButton as SpacingLinesButton;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::SpacingWordsButton::SpacingWordsButton as SpacingWordsButton;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::SpacingLettersButton::SpacingLettersButton as SpacingLettersButton;
+
+        use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionLeftRightHorizontalWordsButton::DirectionLeftRightHorizontalWordsButton as DirectionLeftRightHorizontalWordsButton;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionRightLeftVerticalWordsButton::DirectionRightLeftVerticalWordsButton as DirectionRightLeftVerticalWordsButton;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionRightLeftHorizontalWordsButton::DirectionRightLeftHorizontalWords as DirectionRightLeftHorizontalWords;
 
 // external styles
 use super::static_styles::Selected::Selected as SelectedStyle;
@@ -54,6 +78,9 @@ struct ComponentStyle {
     border_top_right_radius: String,
     border_bottom_left_radius: String,
     border_bottom_right_radius: String,
+
+    // text stuff
+    writing_mode: String,
 }
 
 impl Style for ComponentStyle {
@@ -81,6 +108,7 @@ impl Style for ComponentStyle {
                 border_top_right_radius: "10px",
                 border_bottom_left_radius: "10px",
                 border_bottom_right_radius: "10px",
+                writing_mode: "vertical-rl",
             }
         )
     }
@@ -580,6 +608,38 @@ impl Component for EditableElement {
                                 <Transform3DToggle onclick={link.callback(|_| Msg::Transform3DToggle )} />
                             }
                         </EditControls>
+                        <EditToolsPanel>
+                            <TextEditPanel>
+                                <AlignRightButton/>
+                                <AlignCenterButton/>
+                                <AlignJustifyButton/>
+                                <AlignLeftButton/>
+
+                                <StyleBoldButton/>
+                                <StyleItalicButton/>
+                                <StyleUnderlineButton/>
+                                <StyleSizeButton/>
+
+                                <SpacingLinesButton/>
+                                <SpacingWordsButton/>
+                                <SpacingLettersButton/>
+                                {   match self.style.writing_mode.as_str() {
+                                        "horizontal-tb" => {
+                                            html!{<DirectionRightLeftVerticalWordsButton/>}
+                                        },
+                                        "vertical-rl" => {
+                                            html!{<DirectionRightLeftHorizontalWords/>}
+                                        },  
+                                        "vertical-lr" => {
+                                            html!{<DirectionLeftRightHorizontalWordsButton/>}
+                                        },
+                                        &_ => {
+                                            todo!()
+                                        }
+                                    }
+                                }
+                            </TextEditPanel>
+                        </EditToolsPanel>
                     }
             </@>
         }

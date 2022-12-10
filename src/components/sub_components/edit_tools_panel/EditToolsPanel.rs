@@ -8,6 +8,7 @@ use append_to_string::*;
 struct EditToolsPanelStyle {
     position: String,
     left: String,
+    top: String,
     width: String,
 }
 
@@ -15,8 +16,9 @@ impl Style for EditToolsPanelStyle {
     fn create() -> Self {
         append_to_string!(
             Self {
-                position: "relative",
+                position: "absolute",
                 left: "calc(100% + 4px)",
+                top: "0px",
                 width: "fit-content",
             }
         )

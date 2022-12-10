@@ -80,6 +80,7 @@ struct ComponentStyle {
     border_bottom_right_radius: String,
 
     // text stuff
+    text_align: String,
     writing_mode: String,
 }
 
@@ -108,7 +109,9 @@ impl Style for ComponentStyle {
                 border_top_right_radius: "10px",
                 border_bottom_left_radius: "10px",
                 border_bottom_right_radius: "10px",
-                writing_mode: "vertical-rl",
+                // writing stuff
+                text_align: "left",
+                writing_mode: "horizontal-tb",
             }
         )
     }
@@ -143,6 +146,16 @@ pub enum Msg {
 
     Transform3DToggle,
     Transform2DToggle,
+
+    //////////////////////
+    // Edit Panel Stuff //
+    //////////////////////
+    
+    // Text Edit Panel
+    AlignTextLeft,
+    AlignTextCenter,
+    AlignTextJustify,
+    AlignTextRight,
 }
 
 #[derive(Properties, PartialEq)]
@@ -531,6 +544,22 @@ impl Component for EditableElement {
 
                 true
             }
+            Msg::AlignTextLeft => {
+                self.style.text_align = "left".to_string();
+                true
+            },
+            Msg::AlignTextCenter => {
+                self.style.text_align = "center".to_string();
+                true
+            },
+            Msg::AlignTextJustify => {
+                self.style.text_align = "justify".to_string();
+                true
+            },
+            Msg::AlignTextRight => {
+                self.style.text_align = "right".to_string();
+                true
+            },
         }
     }
 
@@ -580,6 +609,7 @@ impl Component for EditableElement {
                 onmousedown = { link.callback( |e| Msg::StartEditingWithCursor(e) )}
                 onmouseup = { link.callback( |e| Msg::StopEditingWithCursor(e) )}
                 style={ style }>
+                <p>{"Some Long Sample Text For Testing"}</p>
                     if self.is_selected {
                         if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
                             <EditableBorderRadiusSelector 
@@ -610,10 +640,10 @@ impl Component for EditableElement {
                         </EditControls>
                         <EditToolsPanel>
                             <TextEditPanel>
-                                <AlignRightButton/>
-                                <AlignCenterButton/>
-                                <AlignJustifyButton/>
-                                <AlignLeftButton/>
+                                <AlignRightButton onclick={link.callback(|_| Msg::AlignTextRight )}/>
+                                <AlignCenterButton onclick={link.callback(|_| Msg::AlignTextCenter )}/>
+                                <AlignJustifyButton onclick={link.callback(|_| Msg::AlignTextJustify )}/>
+                                <AlignLeftButton onclick={link.callback(|_| Msg::AlignTextLeft )}/>
 
                                 <StyleBoldButton/>
                                 <StyleItalicButton/>

@@ -4,6 +4,8 @@
 
 <p>This is basically just an excuse to learn rust and yew for me. It might help the occasional lost soul in search of an incrediby niche solution though so here it is.</p>
 
+See it live here: <a href="https://judit.onrender.com/">https://judit.onrender.com/</a>
+
 <h2 style="font-weight: bold;">How to run</h2>
 <ol>
     <li><code>cd Judit</code></li>

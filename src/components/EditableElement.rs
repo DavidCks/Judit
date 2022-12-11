@@ -82,6 +82,10 @@ struct ComponentStyle {
     // text stuff
     text_align: String,
     writing_mode: String,
+    text_decoration_line: String,
+    font_weight: String,
+    font_style: String,
+    font_size: String,
 }
 
 impl Style for ComponentStyle {
@@ -112,6 +116,10 @@ impl Style for ComponentStyle {
                 // writing stuff
                 text_align: "left",
                 writing_mode: "horizontal-tb",
+                text_decoration_line: "none", // for underline
+                font_weight: "normal", // for bold
+                font_style: "normal", //for italic
+                font_size: "1rem",
             }
         )
     }
@@ -129,6 +137,7 @@ pub enum EditStates {
     Resize,
     BorderRadius,
     Edit3D,
+    Text,
 }
 
 // Component Fuctions
@@ -156,6 +165,19 @@ pub enum Msg {
     AlignTextCenter,
     AlignTextJustify,
     AlignTextRight,
+
+    StyleTextBold,
+    StyleTextItalic,
+    StyleTextUnderline,
+    StyleTextSize,
+
+    SpacingLetters,
+    SpacingWords,
+    SpacingLines,
+
+    TextDirectionLRHorizontal,
+    TextDirectionRLHorizontal,
+    TextDirectionRLVertical,
 }
 
 #[derive(Properties, PartialEq)]
@@ -198,6 +220,9 @@ pub struct EditableElement {
     is_editing_3d_rotate_y: bool,
     is_editing_3d_rotate_z: bool,
     
+    // text edits relative to mouse
+    is_editing_text_size: bool,
+
     is_selected: bool,
     render: bool,
 
@@ -254,6 +279,8 @@ impl Component for EditableElement {
             is_editing_3d_rotate_x: false,
             is_editing_3d_rotate_y: false,
             is_editing_3d_rotate_z: false,
+
+            is_editing_text_size: false,
 
             is_selected: false,
             render: true,
@@ -385,6 +412,11 @@ impl Component for EditableElement {
                         self.editing_state = EditStates::Edit3D;
                         self.is_editing_3d_rotate_z = true;
                     }
+                    // Text Edits relative to mouse movement
+                    "Judit_StyleSizeButton" => {
+                        self.editing_state = EditStates::Text;
+                        self.is_editing_text_size = true;
+                    }
                     &_ => {
                         if let Some(jrole) = target.get_attribute("jrole") {
                             info!("unused jrole. jrole found: '{}'", jrole);
@@ -421,6 +453,8 @@ impl Component for EditableElement {
                 self.is_editing_3d_rotate_x = false;
                 self.is_editing_3d_rotate_y = false;
                 self.is_editing_3d_rotate_z = false;
+
+                self.is_editing_text_size = false;
 
                 false
             }
@@ -539,7 +573,15 @@ impl Component for EditableElement {
                                 self.style.transform.rotateZ = format!("{}deg", relative_z_rotation.trunc());
                             }
                         }
-                    }
+                    },
+                    EditStates::Text => {
+                        if self.is_editing_text_size {
+                            let relative_text_size: f64 = self.style.font_size.try_to_f64().unwrap() + f64::from(offset_x) / 50_f64;
+                            if relative_text_size > 0.5_f64 {
+                                self.style.font_size = format!("{}rem", relative_text_size);
+                            }
+                        }
+                    },
                     EditStates::None => {
 
                     }
@@ -567,6 +609,53 @@ impl Component for EditableElement {
                 self.style.text_align = "right".to_string();
                 true
             },
+            Msg::StyleTextBold => {
+                match self.style.font_weight.as_str() {
+                    "normal" => {
+                        self.style.font_weight = "bold".to_string();
+                        true
+                    },
+                    &_ => {
+                        self.style.font_weight = "normal".to_string();
+                        true
+                    }
+                }
+            },
+            Msg::StyleTextItalic => {
+                match self.style.font_style.as_str() {
+                    "normal" => {
+                        self.style.font_style = "italic".to_string();
+                        true
+                    },
+                    &_ => {
+                        self.style.font_style = "normal".to_string();
+                        true
+                    }
+                }
+            },
+            Msg::StyleTextUnderline => {
+                match self.style.text_decoration_line.as_str() {
+                    "none" => {
+                        self.style.text_decoration_line = "underline".to_string();
+                        true
+                    },
+                    "underline" => {
+                        self.style.text_decoration_line = "none".to_string();
+                        true
+                    }
+                    &_ => {
+                        info!("Invalid text-decoration-line value: {}", self.style.text_decoration_line);
+                        false
+                    }
+                }
+            },
+            Msg::StyleTextSize => {false},
+            Msg::SpacingLetters => todo!(),
+            Msg::SpacingWords => todo!(),
+            Msg::SpacingLines => todo!(),
+            Msg::TextDirectionLRHorizontal => todo!(),
+            Msg::TextDirectionRLHorizontal => todo!(),
+            Msg::TextDirectionRLVertical => todo!(),
         }
     }
 
@@ -652,23 +741,23 @@ impl Component for EditableElement {
                                 <AlignJustifyButton onclick={link.callback(|_| Msg::AlignTextJustify )}/>
                                 <AlignLeftButton onclick={link.callback(|_| Msg::AlignTextLeft )}/>
 
-                                <StyleBoldButton/>
-                                <StyleItalicButton/>
-                                <StyleUnderlineButton/>
-                                <StyleSizeButton/>
+                                <StyleBoldButton onclick={link.callback(|_| Msg::StyleTextBold )}/>
+                                <StyleItalicButton onclick={link.callback(|_| Msg::StyleTextItalic )}/>
+                                <StyleUnderlineButton onclick={link.callback(|_| Msg::StyleTextUnderline )}/>
+                                <StyleSizeButton onclick={link.callback(|_| Msg::StyleTextSize )}/>
 
-                                <SpacingLinesButton/>
-                                <SpacingWordsButton/>
-                                <SpacingLettersButton/>
+                                <SpacingLinesButton onclick={link.callback(|_| Msg::SpacingLines )}/>
+                                <SpacingWordsButton onclick={link.callback(|_| Msg::SpacingWords )}/>
+                                <SpacingLettersButton onclick={link.callback(|_| Msg::SpacingLetters )}/>
                                 {   match self.style.writing_mode.as_str() {
                                         "horizontal-tb" => {
-                                            html!{<DirectionRightLeftVerticalWordsButton/>}
+                                            html!{<DirectionRightLeftVerticalWordsButton onclick={link.callback(|_| Msg::TextDirectionRLVertical )}/>}
                                         },
                                         "vertical-rl" => {
-                                            html!{<DirectionRightLeftHorizontalWords/>}
+                                            html!{<DirectionRightLeftHorizontalWords onclick={link.callback(|_| Msg::TextDirectionRLHorizontal )}/>}
                                         },  
                                         "vertical-lr" => {
-                                            html!{<DirectionLeftRightHorizontalWordsButton/>}
+                                            html!{<DirectionLeftRightHorizontalWordsButton onclick={link.callback(|_| Msg::TextDirectionLRHorizontal )}/>}
                                         },
                                         &_ => {
                                             todo!()

@@ -26,9 +26,15 @@ pub struct StyleUnderlineButton {
 pub enum Msg {
 }
 
+#[derive(Properties, PartialEq)]
+pub struct StyleUnderlineButtonProps {
+    #[prop_or_default]
+    pub onclick: Callback<MouseEvent>,
+}
+
 impl Component for StyleUnderlineButton {
     type Message = Msg;
-    type Properties = ();
+    type Properties = StyleUnderlineButtonProps;
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
@@ -36,9 +42,9 @@ impl Component for StyleUnderlineButton {
         }
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
-            <svg style={ self.style.inline() } width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000">
+            <svg onclick={ ctx.props().onclick.clone() } style={ self.style.inline() } width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000">
                 <path d="M16 5v6a4 4 0 01-4 4v0a4 4 0 01-4-4V5M6 19h12" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
         }

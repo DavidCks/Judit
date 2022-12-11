@@ -41,7 +41,7 @@ use super::sub_components::edit_tools_panel::EditToolsPanel::EditToolsPanel as E
 
         use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionLeftRightHorizontalWordsButton::DirectionLeftRightHorizontalWordsButton as DirectionLeftRightHorizontalWordsButton;
         use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionRightLeftVerticalWordsButton::DirectionRightLeftVerticalWordsButton as DirectionRightLeftVerticalWordsButton;
-        use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionRightLeftHorizontalWordsButton::DirectionRightLeftHorizontalWords as DirectionRightLeftHorizontalWords;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionLeftRightVerticalWordsButton::DirectionLeftRightVerticalWordsButton as DirectionLeftRightVerticalWordsButton;
 
 // external styles
 use super::static_styles::Selected::Selected as SelectedStyle;
@@ -82,10 +82,14 @@ struct ComponentStyle {
     // text stuff
     text_align: String,
     writing_mode: String,
+    text_orientation: String,
     text_decoration_line: String,
     font_weight: String,
     font_style: String,
     font_size: String,
+    letter_spacing: String,
+    word_spacing: String,
+    line_height: String,
 }
 
 impl Style for ComponentStyle {
@@ -96,8 +100,8 @@ impl Style for ComponentStyle {
                 box_sizing: "border-box",
                 top: "10px",
                 left: "50px",
-                width: "100px",
-                height: "100px",
+                width: "200px",
+                height: "200px",
                 background_color: "lightgray",
                 transform_origin: "50% 50%",
                 transform_style: "preserve-3d",
@@ -116,10 +120,14 @@ impl Style for ComponentStyle {
                 // writing stuff
                 text_align: "left",
                 writing_mode: "horizontal-tb",
+                text_orientation: "upright",
                 text_decoration_line: "none", // for underline
                 font_weight: "normal", // for bold
                 font_style: "normal", //for italic
                 font_size: "1rem",
+                letter_spacing: "0em",
+                word_spacing: "0.25em",
+                line_height: "1",
             }
         )
     }
@@ -176,8 +184,8 @@ pub enum Msg {
     SpacingLines,
 
     TextDirectionLRHorizontal,
-    TextDirectionRLHorizontal,
     TextDirectionRLVertical,
+    TextDirectionLRVertical,
 }
 
 #[derive(Properties, PartialEq)]
@@ -222,6 +230,9 @@ pub struct EditableElement {
     
     // text edits relative to mouse
     is_editing_text_size: bool,
+    is_editing_text_spacing_letters: bool,
+    is_editing_text_spacing_lines: bool,
+    is_editing_text_spacing_words: bool,
 
     is_selected: bool,
     render: bool,
@@ -281,6 +292,9 @@ impl Component for EditableElement {
             is_editing_3d_rotate_z: false,
 
             is_editing_text_size: false,
+            is_editing_text_spacing_letters: false,
+            is_editing_text_spacing_lines: false,
+            is_editing_text_spacing_words: false,
 
             is_selected: false,
             render: true,
@@ -417,6 +431,18 @@ impl Component for EditableElement {
                         self.editing_state = EditStates::Text;
                         self.is_editing_text_size = true;
                     }
+                    "Judit_SpacingLettersButton" => {
+                        self.editing_state = EditStates::Text;
+                        self.is_editing_text_spacing_letters = true;
+                    }
+                    "Judit_SpacingLinesButton" => {
+                        self.editing_state = EditStates::Text;
+                        self.is_editing_text_spacing_lines = true;
+                    }
+                    "Judit_SpacingWordsButton" => {
+                        self.editing_state = EditStates::Text;
+                        self.is_editing_text_spacing_words = true;
+                    }
                     &_ => {
                         if let Some(jrole) = target.get_attribute("jrole") {
                             info!("unused jrole. jrole found: '{}'", jrole);
@@ -455,6 +481,9 @@ impl Component for EditableElement {
                 self.is_editing_3d_rotate_z = false;
 
                 self.is_editing_text_size = false;
+                self.is_editing_text_spacing_letters = false;
+                self.is_editing_text_spacing_lines = false;
+                self.is_editing_text_spacing_words = false;
 
                 false
             }
@@ -580,6 +609,18 @@ impl Component for EditableElement {
                             if relative_text_size > 0.5_f64 {
                                 self.style.font_size = format!("{}rem", relative_text_size);
                             }
+                        } else if self.is_editing_text_spacing_letters {
+                            let relative_letter_spacing: f64 = self.style.letter_spacing.try_to_f64().unwrap() + f64::from(offset_x) / 50_f64;
+                            self.style.letter_spacing = format!("{}em", relative_letter_spacing);
+
+                        } else if self.is_editing_text_spacing_lines {
+                            let relative_line_spacing: f64 = self.style.line_height.try_to_f64().unwrap() + f64::from(offset_x) / 50_f64;
+                            self.style.line_height = format!("{}", relative_line_spacing);
+
+                        } else if self.is_editing_text_spacing_words {
+                            let relative_word_spacing: f64 = self.style.word_spacing.try_to_f64().unwrap() + f64::from(offset_x) / 50_f64;
+                            self.style.word_spacing = format!("{}em", relative_word_spacing);
+
                         }
                     },
                     EditStates::None => {
@@ -650,12 +691,21 @@ impl Component for EditableElement {
                 }
             },
             Msg::StyleTextSize => {false},
-            Msg::SpacingLetters => todo!(),
-            Msg::SpacingWords => todo!(),
-            Msg::SpacingLines => todo!(),
-            Msg::TextDirectionLRHorizontal => todo!(),
-            Msg::TextDirectionRLHorizontal => todo!(),
-            Msg::TextDirectionRLVertical => todo!(),
+            Msg::SpacingLetters => {false},
+            Msg::SpacingWords => {false},
+            Msg::SpacingLines => {false},
+            Msg::TextDirectionLRHorizontal => {
+                self.style.writing_mode = "horizontal-tb".to_string();
+                true
+            },
+            Msg::TextDirectionRLVertical => {
+                self.style.writing_mode = "vertical-rl".to_string();
+                true
+            },
+            Msg::TextDirectionLRVertical => {
+                self.style.writing_mode = "vertical-lr".to_string();
+                true
+            }
         }
     }
 
@@ -706,6 +756,8 @@ impl Component for EditableElement {
                 onmouseup = { link.callback( |e| Msg::StopEditingWithCursor(e) )}
                 style={ style }>
                 <p>{"Some Long Sample Text For Testing"}</p>
+                <p>{"これは日本語のテスト文"}</p>
+                <p>{"これは日本語のとEnglishのTest Text"}</p>
                     if self.is_selected {
                         if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
                             <EditableBorderRadiusSelector 
@@ -754,11 +806,12 @@ impl Component for EditableElement {
                                             html!{<DirectionRightLeftVerticalWordsButton onclick={link.callback(|_| Msg::TextDirectionRLVertical )}/>}
                                         },
                                         "vertical-rl" => {
-                                            html!{<DirectionRightLeftHorizontalWords onclick={link.callback(|_| Msg::TextDirectionRLHorizontal )}/>}
-                                        },  
+                                            html!{<DirectionLeftRightVerticalWordsButton onclick={link.callback(|_| Msg::TextDirectionLRVertical )}/>}
+                                        },
                                         "vertical-lr" => {
                                             html!{<DirectionLeftRightHorizontalWordsButton onclick={link.callback(|_| Msg::TextDirectionLRHorizontal )}/>}
                                         },
+                                        
                                         &_ => {
                                             todo!()
                                         }

@@ -10,6 +10,8 @@ struct EditToolsPanelStyle {
     left: String,
     top: String,
     width: String,
+    writing_mode: String,
+    direction: String,
 }
 
 impl Style for EditToolsPanelStyle {
@@ -20,6 +22,8 @@ impl Style for EditToolsPanelStyle {
                 left: "calc(100% + 4px)",
                 top: "0px",
                 width: "fit-content",
+                writing_mode: "horizontal-tb",
+                direction: "ltr",
             }
         )
     }

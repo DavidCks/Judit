@@ -15,4 +15,4 @@ pub mod SpacingLettersButton;
 
 pub mod DirectionLeftRightHorizontalWordsButton;
 pub mod DirectionRightLeftVerticalWordsButton;
-pub mod DirectionRightLeftHorizontalWordsButton;
+pub mod DirectionLeftRightVerticalWordsButton;

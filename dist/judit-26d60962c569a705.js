@@ -211,7 +211,7 @@ function makeClosure(arg0, arg1, dtor, f) {
     return real;
 }
 function __wbg_adapter_18(arg0, arg1, arg2) {
-    wasm._dyn_core__ops__function__Fn__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__ha99d18a1cea75c60(arg0, arg1, addHeapObject(arg2));
+    wasm._dyn_core__ops__function__Fn__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h29e9d69e4a8d72a6(arg0, arg1, addHeapObject(arg2));
 }
 
 let cachedUint32Memory0 = new Uint32Array();
@@ -559,8 +559,8 @@ function getImports() {
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbindgen_closure_wrapper2248 = function(arg0, arg1, arg2) {
-        const ret = makeClosure(arg0, arg1, 1639, __wbg_adapter_18);
+    imports.wbg.__wbindgen_closure_wrapper2342 = function(arg0, arg1, arg2) {
+        const ret = makeClosure(arg0, arg1, 1749, __wbg_adapter_18);
         return addHeapObject(ret);
     };
 
@@ -599,7 +599,7 @@ function initSync(module) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('judit-be80383ce27e9461_bg.wasm', import.meta.url);
+        input = new URL('judit-26d60962c569a705_bg.wasm', import.meta.url);
     }
     const imports = getImports();
 

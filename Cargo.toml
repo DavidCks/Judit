@@ -31,7 +31,7 @@ gloo-events = "0.1"
 rusty-css = { git="https://github.com/DavidCks/rusty-css.git", branch = "main" }
 
 # used for making structs iterable
-bevy_reflect = "0.8.1"
+bevy_reflect = "0.9.1"
 strum_macros = "0.24.3"
 strum = "0.24.1"
 

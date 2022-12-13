@@ -9,24 +9,22 @@ use crate::components::static_styles::Selected::Selected as SelectedStyle;
 
 #[allow(non_snake_case, non_camel_case_types)]
 #[derive(Reflect)]
-struct FontPickerStyle_fokus {
-    append: String,
+struct FontPickerStyle_focus {
     border_width: String,
     border_color: String,
     border_style: String,    
 }
 
-impl Style for FontPickerStyle_fokus {
+impl Style for FontPickerStyle_focus {
     fn create() -> Self {
 
         let selected_style = SelectedStyle::create();
 
         append_to_string!(
             Self {
-                append: ":focus",
                 border_width: selected_style.border_width.clone(),
                 border_color: selected_style.border_color,
-                border_style: "solid !important",
+                border_style: "solid",
             }
         )
     }
@@ -40,6 +38,7 @@ struct FontPickerStyle {
     border_radius: String,
     border_style: String,
     border_width: String,
+    border_color: String,
     background_color: String,
     font_size: String,
     height: String,
@@ -63,6 +62,7 @@ impl Style for FontPickerStyle {
                 position: "initial",
                 grid_column: "span 4",
                 border_style: "solid",
+                border_color: "#EEEEEE",
                 border_width: selected_style.border_width.clone(),
                 border_radius: "10px",
                 background_color: "#EEEEEE",
@@ -75,7 +75,7 @@ impl Style for FontPickerStyle {
 
 pub struct FontPicker {
    style: FontPickerStyle,
-   focus_style: FontPickerStyle_fokus,
+   focus_style: FontPickerStyle_focus,
    fonts: Vec<Html>,
 }
 
@@ -97,7 +97,7 @@ impl Component for FontPicker {
     fn create(_ctx: &Context<Self>) -> Self {
 
         Self {
-            focus_style: FontPickerStyle_fokus::create(), 
+            focus_style: FontPickerStyle_focus::create(), 
             style: FontPickerStyle::create(), 
             fonts: vec![
                 html!(<option style="font-family: Arial, sans-serif" value="Arial, sans-serif">{ "Arial (sans-serif)" }</option>),
@@ -119,10 +119,11 @@ impl Component for FontPicker {
         let document = window.document().expect("couldn't get `document");
 
         let standard_class = self.style.as_class(&document).unwrap();
-        let focus_class =  self.focus_style.as_class(&document).unwrap();
+        self.focus_style.add_as_pseudo_class(&document);
+        
         
         html! {
-            <select onchange={ctx.props().onchange.clone()} style={ self.style.inline() } class={ format!("{} {}", focus_class, standard_class) } >
+            <select onchange={ctx.props().onchange.clone()} class={ standard_class } >
                 { for self.fonts.clone() }
             </select>
         }

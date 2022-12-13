@@ -26,7 +26,7 @@ impl Style for ToolbarStyle {
                 position: "fixed",
                 left: "0px",
                 top: "0px",
-                background_color: "lightgray",
+                background_color: "#EEEEEE",
                 width: "40px",
                 height: "100%",
                 padding_top: "5px",

@@ -57,7 +57,7 @@ impl Style for EditableBorderRadiusSelectorStyle {
                 right: "initial",
                 bottom: "initial",
                 background_image: "none",
-                background_color: "lightgray",
+                background_color: "#EEEEEE",
                 border_radius: "",
                 border_width: "",
                 border_color: "",

@@ -4,9 +4,9 @@ use append_to_string::*;
 
 #[derive(Reflect)]
 pub struct Selected {
-    border_width: String,
-    border_color: String,
-    border_style: String,
+    pub border_width: String,
+    pub border_color: String,
+    pub border_style: String,
 }
 
 impl Style for Selected {

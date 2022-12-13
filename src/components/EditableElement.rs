@@ -1,11 +1,12 @@
 use log::{ info };
+use wasm_bindgen::JsCast;
 use std::str::FromStr;
 //use log::info;
 use yew::{prelude::*};
 use yew::html::Scope;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
-use web_sys::{ MouseEvent,  Element };
+use web_sys::{ MouseEvent,  Element, HtmlSelectElement };
 use rusty_css::*;
 use super::super::Msg as PMsg;
 
@@ -42,6 +43,9 @@ use super::sub_components::edit_tools_panel::EditToolsPanel::EditToolsPanel as E
         use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionLeftRightHorizontalWordsButton::DirectionLeftRightHorizontalWordsButton as DirectionLeftRightHorizontalWordsButton;
         use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionRightLeftVerticalWordsButton::DirectionRightLeftVerticalWordsButton as DirectionRightLeftVerticalWordsButton;
         use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionLeftRightVerticalWordsButton::DirectionLeftRightVerticalWordsButton as DirectionLeftRightVerticalWordsButton;
+
+// font picker
+use super::sub_components::edit_tools_panel::FontPicker::FontPicker as FontPicker;
 
 // external styles
 use super::static_styles::Selected::Selected as SelectedStyle;
@@ -90,6 +94,7 @@ struct ComponentStyle {
     letter_spacing: String,
     word_spacing: String,
     line_height: String,
+    font_family: String,
 }
 
 impl Style for ComponentStyle {
@@ -102,7 +107,7 @@ impl Style for ComponentStyle {
                 left: "50px",
                 width: "200px",
                 height: "200px",
-                background_color: "lightgray",
+                background_color: "#EEEEEE",
                 transform_origin: "50% 50%",
                 transform_style: "preserve-3d",
                 transform: Transform { 
@@ -128,6 +133,7 @@ impl Style for ComponentStyle {
                 letter_spacing: "0em",
                 word_spacing: "0.25em",
                 line_height: "1",
+                font_family: "Arial, sans-serif",
             }
         )
     }
@@ -186,6 +192,8 @@ pub enum Msg {
     TextDirectionLRHorizontal,
     TextDirectionRLVertical,
     TextDirectionLRVertical,
+
+    PickFont(Event),
 }
 
 #[derive(Properties, PartialEq)]
@@ -338,7 +346,6 @@ impl Component for EditableElement {
                 true
             }
             Msg::StartEditingWithCursor(e) => {
-                e.prevent_default();
 
                 ///////////////////////////////////////////////////////////////////////////
                 // edit elements width / height or move element based on cursor position //
@@ -690,10 +697,10 @@ impl Component for EditableElement {
                     }
                 }
             },
-            Msg::StyleTextSize => {false},
-            Msg::SpacingLetters => {false},
-            Msg::SpacingWords => {false},
-            Msg::SpacingLines => {false},
+            Msg::StyleTextSize => {false}, //onclick
+            Msg::SpacingLetters => {false}, //onclick
+            Msg::SpacingWords => {false}, //onclick
+            Msg::SpacingLines => {false}, //onclick
             Msg::TextDirectionLRHorizontal => {
                 self.style.writing_mode = "horizontal-tb".to_string();
                 true
@@ -706,6 +713,11 @@ impl Component for EditableElement {
                 self.style.writing_mode = "vertical-lr".to_string();
                 true
             }
+            Msg::PickFont(select_event) => {
+                let target_element = select_event.target().unwrap().dyn_into::<HtmlSelectElement>();
+                self.style.font_family = target_element.unwrap().value();
+                true
+            },
         }
     }
 
@@ -817,6 +829,7 @@ impl Component for EditableElement {
                                         }
                                     }
                                 }
+                                <FontPicker onchange={link.callback(|e| Msg::PickFont(e) )}/>
                             </TextEditPanel>
                         </EditToolsPanel>
                     }

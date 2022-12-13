@@ -42,6 +42,11 @@ struct FontPickerStyle {
     border_width: String,
     background_color: String,
     font_size: String,
+    height: String,
+    display: String,
+    justify_content: String,
+    align_content: String,
+    align_items: String,
 }
 
 impl Style for FontPickerStyle {
@@ -51,13 +56,18 @@ impl Style for FontPickerStyle {
 
         append_to_string!(
             Self {
+                display: "flex",
+                justify_content: "center",
+                align_items: "center",
+                align_content: "center",
                 position: "initial",
                 grid_column: "span 4",
                 border_style: "solid",
-                border_width: selected_style.border_width,
+                border_width: selected_style.border_width.clone(),
                 border_radius: "10px",
                 background_color: "#EEEEEE",
-                font_size: "1.2rem",
+                font_size: "1rem",
+                height: format!("calc(100% - {} * 2)", &selected_style.border_width),
             }
         )
     }

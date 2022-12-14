@@ -798,7 +798,7 @@ impl Component for EditableElement {
                                 <Transform3DToggle onclick={link.callback(|_| Msg::Transform3DToggle )} />
                             }
                         </EditControls>
-                        <EditToolsPanel>
+                        <EditToolsPanel parent_transform={ self.style.transform.clone() } >
                             <TextEditPanel>
                                 <AlignRightButton onclick={link.callback(|_| Msg::AlignTextRight )}/>
                                 <AlignCenterButton onclick={link.callback(|_| Msg::AlignTextCenter )}/>

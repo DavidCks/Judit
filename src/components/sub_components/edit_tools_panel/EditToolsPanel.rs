@@ -3,6 +3,8 @@ use yew::prelude::*;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
 
+use crate::Transform;
+
 #[allow(non_snake_case)]
 #[derive(Reflect)]
 struct EditToolsPanelStyle {
@@ -33,6 +35,7 @@ impl Style for EditToolsPanelStyle {
 pub struct EditToolsPanelProps {
     #[prop_or_default]
     pub children: Children,
+    pub parent_transform: Transform,
 }
 
 pub struct EditToolsPanel {
@@ -53,8 +56,13 @@ impl Component for EditToolsPanel {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
+
+        let rx = format!("rotateX({}deg)", ctx.props().parent_transform.rotateX.try_to_f64().unwrap() * -1_f64); 
+        let ry = format!("rotateY({}deg)", ctx.props().parent_transform.rotateY.try_to_f64().unwrap() * -1_f64);
+        let rz = format!("rotateZ({}deg)", ctx.props().parent_transform.rotateZ.try_to_f64().unwrap() * -1_f64);
+
         html! {
-            <div style={ self.style.inline() } >
+            <div style={ format!("{init_style} transform: {} {} {}", rz, ry, rx, init_style = self.style.inline() )} >
                 { for ctx.props().children.iter() }
             </div>
             

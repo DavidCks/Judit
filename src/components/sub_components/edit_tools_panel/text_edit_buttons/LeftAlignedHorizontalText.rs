@@ -5,11 +5,11 @@ use append_to_string::*;
 
 #[allow(non_snake_case)]
 #[derive(Reflect)]
-struct DirectionLeftRightHorizontalWordsButtonStyle {
+struct LeftAlignedHorizontalTextStyle {
     position: String,
 }
 
-impl Style for DirectionLeftRightHorizontalWordsButtonStyle {
+impl Style for LeftAlignedHorizontalTextStyle {
     fn create() -> Self {
         append_to_string!(
             Self {
@@ -19,26 +19,26 @@ impl Style for DirectionLeftRightHorizontalWordsButtonStyle {
     }
 }
 
-pub struct DirectionLeftRightHorizontalWordsButton {
-   style: DirectionLeftRightHorizontalWordsButtonStyle
+pub struct LeftAlignedHorizontalText {
+   style: LeftAlignedHorizontalTextStyle
 }
 
 pub enum Msg {
 }
 
 #[derive(Properties, PartialEq)]
-pub struct DirectionLeftRightHorizontalWordsButtonProps {
+pub struct LeftAlignedHorizontalTextProps {
     #[prop_or_default]
     pub onclick: Callback<MouseEvent>,
 }
 
-impl Component for DirectionLeftRightHorizontalWordsButton {
+impl Component for LeftAlignedHorizontalText {
     type Message = Msg;
-    type Properties = DirectionLeftRightHorizontalWordsButtonProps;
+    type Properties = LeftAlignedHorizontalTextProps;
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
-            style: DirectionLeftRightHorizontalWordsButtonStyle::create(),
+            style: LeftAlignedHorizontalTextStyle::create(),
         }
     }
 

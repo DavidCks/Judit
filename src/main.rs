@@ -40,6 +40,8 @@ pub enum Msg {
     PropagateCursorMove(MouseEvent),
     StopAllEditing(MouseEvent),
     AddElement(JTypes),
+    EnableDropzones,
+    DisableDropzones,
 }
 
 struct App {
@@ -47,6 +49,12 @@ struct App {
     children_links: Vec<Scope<EditableElement>>,
     selected_child: Option<Scope<EditableElement>>,
     children: Vec<Html>,
+    is_dropzones_enabled: bool,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct GlobalConditions {
+    is_dropzones_enabled: bool,
 }
 
 impl Component for App {
@@ -60,6 +68,7 @@ impl Component for App {
             children_links: Vec::new(),
             selected_child: None,
             children: vec!( html!(<EditableElement />) ),
+            is_dropzones_enabled: false,
         }
     }
 
@@ -94,6 +103,14 @@ impl Component for App {
             Msg::AddElement(jtype) => {
                 self.children.push( html!(<EditableElement jtype={jtype}/>) ); 
                 true
+            }
+            Msg::EnableDropzones => {
+                self.is_dropzones_enabled = true;
+                false
+            },
+            Msg::DisableDropzones => {
+                self.is_dropzones_enabled = false;
+                false
             }
         }
     }

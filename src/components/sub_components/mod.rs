@@ -6,3 +6,4 @@ pub mod Transform3DSelector;
 pub mod DeleteButton;
 pub mod edit_controls;
 pub mod edit_tools_panel;
+pub mod drop_zones;

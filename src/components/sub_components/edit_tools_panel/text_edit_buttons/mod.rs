@@ -13,6 +13,6 @@ pub mod SpacingLinesButton;
 pub mod SpacingWordsButton;
 pub mod SpacingLettersButton;
 
-pub mod DirectionLeftRightHorizontalWordsButton;
-pub mod DirectionRightLeftVerticalWordsButton;
-pub mod DirectionLeftRightVerticalWordsButton;
+pub mod LeftAlignedHorizontalText;
+pub mod RightAlignedVerticalText;
+pub mod LeftAlignedVerticalText;

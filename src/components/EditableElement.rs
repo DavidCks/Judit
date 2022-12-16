@@ -6,7 +6,7 @@ use yew::{prelude::*};
 use yew::html::Scope;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
-use web_sys::{ MouseEvent,  Element, HtmlSelectElement };
+use web_sys::{ MouseEvent, DragEvent, Element, HtmlSelectElement, Document, window };
 use rusty_css::*;
 use super::super::Msg as PMsg;
 
@@ -40,15 +40,42 @@ use super::sub_components::edit_tools_panel::EditToolsPanel::EditToolsPanel as E
         use super::sub_components::edit_tools_panel::text_edit_buttons::SpacingWordsButton::SpacingWordsButton as SpacingWordsButton;
         use super::sub_components::edit_tools_panel::text_edit_buttons::SpacingLettersButton::SpacingLettersButton as SpacingLettersButton;
 
-        use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionLeftRightHorizontalWordsButton::DirectionLeftRightHorizontalWordsButton as DirectionLeftRightHorizontalWordsButton;
-        use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionRightLeftVerticalWordsButton::DirectionRightLeftVerticalWordsButton as DirectionRightLeftVerticalWordsButton;
-        use super::sub_components::edit_tools_panel::text_edit_buttons::DirectionLeftRightVerticalWordsButton::DirectionLeftRightVerticalWordsButton as DirectionLeftRightVerticalWordsButton;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::LeftAlignedHorizontalText::LeftAlignedHorizontalText as LeftAlignedHorizontalText;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::RightAlignedVerticalText::RightAlignedVerticalText as RightAlignedVerticalText;
+        use super::sub_components::edit_tools_panel::text_edit_buttons::LeftAlignedVerticalText::LeftAlignedVerticalText as LeftAlignedVerticalText;
+
+// Drag and Drop
+use super::sub_components::drop_zones::DropzoneLeft::DropzoneLeft as DropzoneLeft;
+use super::sub_components::drop_zones::DropzoneTop::DropzoneTop as DropzoneTop;
+use super::sub_components::drop_zones::DropzoneRight::DropzoneRight as DropzoneRight;
+use super::sub_components::drop_zones::DropzoneBottom::DropzoneBottom as DropzoneBottom;
+use super::sub_components::drop_zones::DropzoneBottomLeft::DropzoneBottomLeft as DropzoneBottomLeft;
+use super::sub_components::drop_zones::DropzoneBottomRight::DropzoneBottomRight as DropzoneBottomRight;
+use super::sub_components::drop_zones::DropzoneTopLeft::DropzoneTopLeft as DropzoneTopLeft;
+use super::sub_components::drop_zones::DropzoneTopRight::DropzoneTopRight as DropzoneTopRight;
+use super::sub_components::drop_zones::DropzoneNoAlign::DropzoneNoAlign as DropzoneNoAlign;
 
 // font picker
 use super::sub_components::edit_tools_panel::FontPicker::FontPicker as FontPicker;
 
 // external styles
 use super::static_styles::Selected::Selected as SelectedStyle;
+
+#[allow(non_camel_case_types)]
+#[derive(Reflect)]
+struct Judit_MakeDropzone {
+    translate: String,
+}
+
+impl Style for Judit_MakeDropzone {
+    fn create() -> Self {
+        append_to_string!( 
+            Self {
+                translate: "0px 0px 1px",
+            }
+        )
+    }
+}
 
 #[allow(non_snake_case)]
 #[derive(Reflect, PartialEq, Clone)]
@@ -194,6 +221,12 @@ pub enum Msg {
     TextDirectionLRVertical,
 
     PickFont(Event),
+
+    PreventDragDefault(DragEvent),
+    EnableDropzones,
+    DisableDropzones,
+    DisplayDropzones,
+    HideDropzones,
 }
 
 #[derive(Properties, PartialEq)]
@@ -207,6 +240,7 @@ pub struct Props {
 pub struct EditableElement {
 
     parent_link: Scope<super::super::App>,
+    document: Document,
 
     style: ComponentStyle,
     border_selector_style_topleft: BorderSelectorStyle,
@@ -242,6 +276,9 @@ pub struct EditableElement {
     is_editing_text_spacing_lines: bool,
     is_editing_text_spacing_words: bool,
 
+    // dragging into and out of an element
+    is_dragging_in: bool,
+
     is_selected: bool,
     render: bool,
 
@@ -268,6 +305,7 @@ impl Component for EditableElement {
 
         Self {
             parent_link: parent_link.downcast::<super::super::App>(),
+            document: window().unwrap().document().unwrap(),
 
             style: ComponentStyle::create(),
             border_selector_style_topleft: initial_border_selector_style.clone(),
@@ -303,6 +341,8 @@ impl Component for EditableElement {
             is_editing_text_spacing_letters: false,
             is_editing_text_spacing_lines: false,
             is_editing_text_spacing_words: false,
+
+            is_dragging_in: false,
 
             is_selected: false,
             render: true,
@@ -346,7 +386,6 @@ impl Component for EditableElement {
                 true
             }
             Msg::StartEditingWithCursor(e) => {
-
                 ///////////////////////////////////////////////////////////////////////////
                 // edit elements width / height or move element based on cursor position //
                 ///////////////////////////////////////////////////////////////////////////
@@ -718,6 +757,25 @@ impl Component for EditableElement {
                 self.style.font_family = target_element.unwrap().value();
                 true
             },
+            Msg::PreventDragDefault(e) => { e.prevent_default(); false },
+            Msg::DisplayDropzones => {
+                self.is_dragging_in = true;
+                true
+            },
+            Msg::HideDropzones => {
+                self.is_dragging_in = false;
+                true
+            }
+            Msg::EnableDropzones => {
+                self.parent_link.send_message(PMsg::EnableDropzones);
+                info!("enable");
+                true
+            },
+            Msg::DisableDropzones => {
+                self.parent_link.send_message(PMsg::DisableDropzones);
+                info!("disable");
+                true
+            }
         }
     }
 
@@ -761,15 +819,20 @@ impl Component for EditableElement {
             );
         }
 
+        let mut dropzone_class = "".to_string();
+        if !self.is_selected {
+            dropzone_class = Judit_MakeDropzone::create().as_class(&self.document).unwrap();
+        }
+
         html! {
-            <@{tag} jrole = { "Judit_EditableElement" }
+            <@{tag} jrole = { "Judit_EditableElement" } class={ dropzone_class }
+                onmouseover = { link.callback( |_| Msg::DisplayDropzones )}
+                onmouseleave = { link.callback( |_| Msg::HideDropzones )}
+
                 onclick = { link.callback( |_| Msg::Select )}
-                onmousedown = { link.callback( |e| Msg::StartEditingWithCursor(e) )}
-                onmouseup = { link.callback( |e| Msg::StopEditingWithCursor(e) )}
+                onmousedown = { link.batch_callback( |e| vec!(Msg::StartEditingWithCursor(e), Msg::EnableDropzones) )}
+                onmouseup = { link.batch_callback( |e| vec!(Msg::StopEditingWithCursor(e), Msg::DisableDropzones) )}
                 style={ style }>
-                <p>{"Some Long Sample Text For Testing"}</p>
-                <p>{"これは日本語のテスト文"}</p>
-                <p>{"これは日本語のとEnglishのTest Text"}</p>
                     if self.is_selected {
                         if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
                             <EditableBorderRadiusSelector 
@@ -815,13 +878,13 @@ impl Component for EditableElement {
                                 <SpacingLettersButton onclick={link.callback(|_| Msg::SpacingLetters )}/>
                                 {   match self.style.writing_mode.as_str() {
                                         "horizontal-tb" => {
-                                            html!{<DirectionRightLeftVerticalWordsButton onclick={link.callback(|_| Msg::TextDirectionRLVertical )}/>}
+                                            html!{<RightAlignedVerticalText onclick={link.callback(|_| Msg::TextDirectionRLVertical )}/>}
                                         },
                                         "vertical-rl" => {
-                                            html!{<DirectionLeftRightVerticalWordsButton onclick={link.callback(|_| Msg::TextDirectionLRVertical )}/>}
+                                            html!{<LeftAlignedVerticalText onclick={link.callback(|_| Msg::TextDirectionLRVertical )}/>}
                                         },
                                         "vertical-lr" => {
-                                            html!{<DirectionLeftRightHorizontalWordsButton onclick={link.callback(|_| Msg::TextDirectionLRHorizontal )}/>}
+                                            html!{<LeftAlignedHorizontalText onclick={link.callback(|_| Msg::TextDirectionLRHorizontal )}/>}
                                         },
                                         
                                         &_ => {
@@ -832,6 +895,20 @@ impl Component for EditableElement {
                                 <FontPicker onchange={link.callback(|e| Msg::PickFont(e) )}/>
                             </TextEditPanel>
                         </EditToolsPanel>
+                    }
+                    if self.is_dragging_in && !self.is_selected && self.parent_link.get_component().unwrap().is_dropzones_enabled {
+                        // align edges
+                        <DropzoneTop/>
+                        <DropzoneLeft/>
+                        <DropzoneRight/>
+                        <DropzoneBottom/>
+                        // align corners
+                        <DropzoneTopLeft/>
+                        <DropzoneTopRight/>
+                        <DropzoneBottomLeft/>
+                        <DropzoneBottomRight/>
+                        // no align
+                        <DropzoneNoAlign/>
                     }
             </@>
         }

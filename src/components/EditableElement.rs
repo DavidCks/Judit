@@ -3,10 +3,10 @@ use wasm_bindgen::JsCast;
 use std::str::FromStr;
 //use log::info;
 use yew::{prelude::*};
-use yew::html::Scope;
+use yew::html::{Scope};
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
-use web_sys::{ MouseEvent, DragEvent, Element, HtmlSelectElement, Document, window };
+use web_sys::{ MouseEvent, Element, HtmlSelectElement, Document, window };
 use rusty_css::*;
 use super::super::Msg as PMsg;
 
@@ -62,7 +62,7 @@ use super::sub_components::edit_tools_panel::FontPicker::FontPicker as FontPicke
 use super::static_styles::Selected::Selected as SelectedStyle;
 
 #[allow(non_camel_case_types)]
-#[derive(Reflect)]
+#[derive(Reflect, Clone)]
 struct Judit_MakeDropzone {
     translate: String,
 }
@@ -89,7 +89,7 @@ pub struct Transform {
 }
 
 #[allow(non_snake_case)]
-#[derive(Reflect)]
+#[derive(Reflect, Clone)]
 struct ComponentStyle {
     position: String,
     box_sizing: String,
@@ -166,12 +166,14 @@ impl Style for ComponentStyle {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum JTypes {
     Div,
     Text,
     Image
 }
+
+#[derive(Clone)]
 pub enum EditStates {
     None,
     Move,
@@ -181,6 +183,7 @@ pub enum EditStates {
     Text,
 }
 
+#[derive(Clone)]
 // Component Fuctions
 pub enum Msg {
     // Drag and Drop / resize / border radius
@@ -222,14 +225,17 @@ pub enum Msg {
 
     PickFont(Event),
 
-    PreventDragDefault(DragEvent),
+    // drop into element as child
     EnableDropzones,
     DisableDropzones,
     DisplayDropzones,
     HideDropzones,
+
+    // - with alignment
+    DropInBottom,
 }
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Clone)]
 pub struct Props {
     #[prop_or(JTypes::Div)]
     pub jtype: JTypes,
@@ -237,10 +243,12 @@ pub struct Props {
     tag: String,
 }
 
+#[derive(Clone)]
 pub struct EditableElement {
 
     parent_link: Scope<super::super::App>,
     document: Document,
+    children: Option<Box<Vec<EditableElement>>>,
 
     style: ComponentStyle,
     border_selector_style_topleft: BorderSelectorStyle,
@@ -306,6 +314,8 @@ impl Component for EditableElement {
         Self {
             parent_link: parent_link.downcast::<super::super::App>(),
             document: window().unwrap().document().unwrap(),
+
+            children: None,
 
             style: ComponentStyle::create(),
             border_selector_style_topleft: initial_border_selector_style.clone(),
@@ -757,7 +767,6 @@ impl Component for EditableElement {
                 self.style.font_family = target_element.unwrap().value();
                 true
             },
-            Msg::PreventDragDefault(e) => { e.prevent_default(); false },
             Msg::DisplayDropzones => {
                 self.is_dragging_in = true;
                 true
@@ -768,14 +777,23 @@ impl Component for EditableElement {
             }
             Msg::EnableDropzones => {
                 self.parent_link.send_message(PMsg::EnableDropzones);
-                info!("enable");
                 true
             },
             Msg::DisableDropzones => {
                 self.parent_link.send_message(PMsg::DisableDropzones);
-                info!("disable");
                 true
             }
+            Msg::DropInBottom => {
+                let selected_link = self.parent_link.get_component().unwrap().selected_child.clone().unwrap();
+                let selected_component = selected_link.get_component().unwrap();
+
+                if self.children.is_none() {
+                    self.children = Some(Box::new(vec!(selected_component.clone() )));
+                }
+
+                info!("dropped in bottom");
+                true
+            },
         }
     }
 
@@ -833,6 +851,11 @@ impl Component for EditableElement {
                 onmousedown = { link.batch_callback( |e| vec!(Msg::StartEditingWithCursor(e), Msg::EnableDropzones) )}
                 onmouseup = { link.batch_callback( |e| vec!(Msg::StopEditingWithCursor(e), Msg::DisableDropzones) )}
                 style={ style }>
+                    if !self.children.is_none() {
+                        //// TODO TODO TODO // generate own context or create the VNode from that or something
+                        { self.children.clone().unwrap().clone()[0].view(ctx) }
+                        //{ for self.children.clone().unwrap().into_iter() }
+                    }
                     if self.is_selected {
                         if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
                             <EditableBorderRadiusSelector 
@@ -901,7 +924,7 @@ impl Component for EditableElement {
                         <DropzoneTop/>
                         <DropzoneLeft/>
                         <DropzoneRight/>
-                        <DropzoneBottom/>
+                        <DropzoneBottom onmouseup={link.callback(|_| Msg::DropInBottom )}/>
                         // align corners
                         <DropzoneTopLeft/>
                         <DropzoneTopRight/>

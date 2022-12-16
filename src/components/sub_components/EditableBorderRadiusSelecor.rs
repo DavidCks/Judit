@@ -27,7 +27,7 @@ impl Style for EditableBorderRadiusSelectorStyle_Hover {
 
 
 #[allow(non_snake_case)]
-#[derive(Reflect)]
+#[derive(Reflect, Debug)]
 struct EditableBorderRadiusSelectorStyle {
     position: String,
     width: String,

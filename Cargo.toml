@@ -20,7 +20,7 @@ exclude = [
 
 [dependencies]
 # frontend framework
-yew = "0.19"
+yew = { version = "0.20", features = ["csr"] }
 
 # js utilities
 web-sys = { version="0.3.60", features=["MouseEvent", "DomRect", "Element", "EventListener", "EventTarget", "SvgElement", "HtmlSelectElement", "DragEvent"] }

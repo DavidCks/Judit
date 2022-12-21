@@ -1,5 +1,7 @@
 use log::{ info };
 use wasm_bindgen::JsCast;
+use yew::virtual_dom::{VNode, VChild};
+use std::ops::Deref;
 use std::str::FromStr;
 //use log::info;
 use yew::{prelude::*};
@@ -89,8 +91,8 @@ pub struct Transform {
 }
 
 #[allow(non_snake_case)]
-#[derive(Reflect, Clone)]
-struct ComponentStyle {
+#[derive(Reflect, Clone, PartialEq)]
+pub struct ComponentStyle {
     position: String,
     box_sizing: String,
 
@@ -240,7 +242,11 @@ pub struct Props {
     #[prop_or(JTypes::Div)]
     pub jtype: JTypes,
     #[prop_or_default]
-    tag: String,
+    pub tag: String,
+    #[prop_or(ComponentStyle::create())]
+    pub init_style: ComponentStyle,
+    #[prop_or_default]
+    pub children: Children,
 }
 
 #[derive(Clone)]
@@ -248,7 +254,7 @@ pub struct EditableElement {
 
     parent_link: Scope<super::super::App>,
     document: Document,
-    children: Option<Box<Vec<EditableElement>>>,
+    children: Vec<EditableElement>,
 
     style: ComponentStyle,
     border_selector_style_topleft: BorderSelectorStyle,
@@ -315,9 +321,9 @@ impl Component for EditableElement {
             parent_link: parent_link.downcast::<super::super::App>(),
             document: window().unwrap().document().unwrap(),
 
-            children: None,
+            children: Vec::new(),
 
-            style: ComponentStyle::create(),
+            style: ctx.props().init_style.clone(),
             border_selector_style_topleft: initial_border_selector_style.clone(),
             border_selector_style_topright: initial_border_selector_style.clone(),
             border_selector_style_bottomleft: initial_border_selector_style.clone(),
@@ -785,11 +791,10 @@ impl Component for EditableElement {
             }
             Msg::DropInBottom => {
                 let selected_link = self.parent_link.get_component().unwrap().selected_child.clone().unwrap();
-                let selected_component = selected_link.get_component().unwrap();
+                selected_link.send_message(Msg::Delete);
 
-                if self.children.is_none() {
-                    self.children = Some(Box::new(vec!(selected_component.clone() )));
-                }
+                let selected_component = selected_link.get_component().unwrap();
+                self.children.push( selected_component.deref().clone() );
 
                 info!("dropped in bottom");
                 true
@@ -846,16 +851,13 @@ impl Component for EditableElement {
             <@{tag} jrole = { "Judit_EditableElement" } class={ dropzone_class }
                 onmouseover = { link.callback( |_| Msg::DisplayDropzones )}
                 onmouseleave = { link.callback( |_| Msg::HideDropzones )}
-
                 onclick = { link.callback( |_| Msg::Select )}
                 onmousedown = { link.batch_callback( |e| vec!(Msg::StartEditingWithCursor(e), Msg::EnableDropzones) )}
                 onmouseup = { link.batch_callback( |e| vec!(Msg::StopEditingWithCursor(e), Msg::DisableDropzones) )}
                 style={ style }>
-                    if !self.children.is_none() {
-                        //// TODO TODO TODO // generate own context or create the VNode from that or something
-                        { self.children.clone().unwrap().clone()[0].view(ctx) }
-                        //{ for self.children.clone().unwrap().into_iter() }
-                    }
+                { self.children.clone().into_iter().map(|c| 
+                    html_nested!{<EditableElement init_style={ c.style.clone() }></EditableElement>}).collect::<Html>() 
+                }
                     if self.is_selected {
                         if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
                             <EditableBorderRadiusSelector 
@@ -933,6 +935,7 @@ impl Component for EditableElement {
                         // no align
                         <DropzoneNoAlign/>
                     }
+                    { for ctx.props().children.iter() }
             </@>
         }
     }

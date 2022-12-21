@@ -67,7 +67,7 @@ impl Component for App {
             style: CanvasStyle::create(),
             children_links: Vec::new(),
             selected_child: None,
-            children: vec!( html!(<EditableElement />) ),
+            children: vec!( html!(<EditableElement></EditableElement>) ),
             is_dropzones_enabled: false,
         }
     }
@@ -144,5 +144,5 @@ fn main() {
     wasm_logger::init(wasm_logger::Config::default());
 
     //launch component
-    yew::start_app::<App>();
+    yew::Renderer::<App>::new().render();
 } 

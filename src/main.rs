@@ -18,6 +18,7 @@ struct CanvasStyle {
     min_width: String,
     width: String,
     opacity: String,
+    transform_style: String,
 }
 
 impl Style for CanvasStyle {
@@ -29,6 +30,7 @@ impl Style for CanvasStyle {
                 min_width: "100vw",
                 width: "auto",
                 opacity: "1",
+                transform_style: "preserve-3d"
             }
         )
     }
@@ -49,11 +51,11 @@ struct App {
     children_links: Vec<Scope<EditableElement>>,
     selected_child: Option<Scope<EditableElement>>,
     children: Vec<Html>,
-    is_dropzones_enabled: bool,
+    global_conds: GlobalConditions,
 }
 
-#[derive(Clone, Debug, PartialEq)]
-struct GlobalConditions {
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct GlobalConditions {
     is_dropzones_enabled: bool,
 }
 
@@ -68,7 +70,9 @@ impl Component for App {
             children_links: Vec::new(),
             selected_child: None,
             children: vec!( html!(<EditableElement></EditableElement>) ),
-            is_dropzones_enabled: false,
+            global_conds: GlobalConditions {
+                is_dropzones_enabled: false,
+            }
         }
     }
 
@@ -101,15 +105,15 @@ impl Component for App {
                 false
             }
             Msg::AddElement(jtype) => {
-                self.children.push( html!(<EditableElement jtype={jtype}/>) ); 
+                self.children.push( html!(<EditableElement jtype={jtype} />) ); 
                 true
             }
             Msg::EnableDropzones => {
-                self.is_dropzones_enabled = true;
-                false
+                self.global_conds.is_dropzones_enabled = true;
+                true
             },
             Msg::DisableDropzones => {
-                self.is_dropzones_enabled = false;
+                self.global_conds.is_dropzones_enabled = false;
                 false
             }
         }

@@ -1,6 +1,5 @@
 use log::{ info };
 use wasm_bindgen::JsCast;
-use yew::virtual_dom::{VNode, VChild};
 use std::ops::Deref;
 use std::str::FromStr;
 //use log::info;
@@ -66,14 +65,14 @@ use super::static_styles::Selected::Selected as SelectedStyle;
 #[allow(non_camel_case_types)]
 #[derive(Reflect, Clone)]
 struct Judit_MakeDropzone {
-    translate: String,
+    z_index: String,
 }
 
 impl Style for Judit_MakeDropzone {
     fn create() -> Self {
         append_to_string!( 
             Self {
-                translate: "0px 0px 1px",
+                z_index: "2",
             }
         )
     }
@@ -111,6 +110,9 @@ pub struct ComponentStyle {
     border_top_right_radius: String,
     border_bottom_left_radius: String,
     border_bottom_right_radius: String,
+    border_color: String,
+    border_style: String,
+    border_width: String,
 
     // text stuff
     text_align: String,
@@ -151,6 +153,9 @@ impl Style for ComponentStyle {
                 border_top_right_radius: "10px",
                 border_bottom_left_radius: "10px",
                 border_bottom_right_radius: "10px",
+                border_color: "#3f3f3f",
+                border_style: "solid",
+                border_width: "2px",
                 // writing stuff
                 text_align: "left",
                 writing_mode: "horizontal-tb",
@@ -195,7 +200,7 @@ pub enum Msg {
     // Receive Parents mouse move event
     ReceiveCursorMove(MouseEvent),
 
-    Select,
+    Select(MouseEvent),
     Deselect,
     Delete,
 
@@ -230,23 +235,31 @@ pub enum Msg {
     // drop into element as child
     EnableDropzones,
     DisableDropzones,
-    DisplayDropzones,
+    DisplayDropzones(MouseEvent),
     HideDropzones,
 
     // - with alignment
     DropInBottom,
+
+    Noop,
 }
 
 #[derive(Properties, PartialEq, Clone)]
 pub struct Props {
     #[prop_or(JTypes::Div)]
     pub jtype: JTypes,
+
     #[prop_or_default]
     pub tag: String,
+
     #[prop_or(ComponentStyle::create())]
     pub init_style: ComponentStyle,
+
     #[prop_or_default]
     pub children: Children,
+
+    #[prop_or_default]
+    pub jdepth: u32, // essentially amounut of parent EditableElements
 }
 
 #[derive(Clone)]
@@ -301,13 +314,31 @@ pub struct EditableElement {
     previous_mouse_y: Option<i32>,
 }
 
+impl EditableElement {
+    fn event_jdepth(&self, e: MouseEvent) -> Option<u32> {
+        let target = e.target_dyn_into::<Element>().unwrap();
+        let element_jdepth = target.get_attribute("jdepth").unwrap_or("none".to_string());
+
+        if element_jdepth != "none".to_string() { 
+            return Some(element_jdepth.parse::<u32>().unwrap());
+        } else {
+            return None;
+        }
+    }
+}
+
 impl Component for EditableElement {
     type Properties = Props;
     type Message = Msg;
 
     fn create(ctx: &Context<Self>) -> Self {
 
-        let parent_link = ctx.link().get_parent().expect("No Parent found").clone();
+        let mut parent_any_link = ctx.link().get_parent().expect("No Parent found").clone();
+        let mut parent_link = parent_any_link.try_downcast::<super::super::App>();
+        while parent_link.is_none() {
+            parent_any_link = parent_any_link.get_parent().expect("Error in recursive parent search").clone();
+            parent_link = parent_any_link.try_downcast::<super::super::App>();
+        }
 
         let initial_border_selector_style = append_to_string!( 
             BorderSelectorStyle { 
@@ -318,7 +349,7 @@ impl Component for EditableElement {
         );
 
         Self {
-            parent_link: parent_link.downcast::<super::super::App>(),
+            parent_link: parent_link.unwrap(),
             document: window().unwrap().document().unwrap(),
 
             children: Vec::new(),
@@ -367,17 +398,21 @@ impl Component for EditableElement {
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::Select => {
+            Msg::Select(e) => {
+
+                let element_jdepth = self.event_jdepth(e);
+
+                if element_jdepth.is_none() || 
+                   ctx.props().jdepth != element_jdepth.unwrap() { return false } // prevent firing on the wrong element
+                if self.is_selected { return false }
+
+                // Send this comoponents instrance context to the parent.
+                let child_link = ctx.link().clone();
+                self.parent_link.send_message( PMsg::ReceiveSelectedChildLink( child_link ));
                 
-                if !self.is_selected {
-                    // Send this comoponents instrance context to the parent.
-                    let child_link = ctx.link().clone();
-                    self.parent_link.send_message( PMsg::ReceiveSelectedChildLink( child_link ));
-                    
-                    self.is_selected = true;
-                    return true;
-                }
-                false
+                self.is_selected = true;
+
+                return true;
             }
             Msg::Deselect => {
                 self.is_selected = false;
@@ -408,7 +443,7 @@ impl Component for EditableElement {
 
                 // select if not already selected
                 if !self.is_selected {
-                    ctx.link().send_message(Msg::Select);
+                    ctx.link().send_message(Msg::Select(e.clone()));
                 }
 
                 let target = e.target_dyn_into::<Element>().unwrap();
@@ -773,11 +808,28 @@ impl Component for EditableElement {
                 self.style.font_family = target_element.unwrap().value();
                 true
             },
-            Msg::DisplayDropzones => {
+            Msg::DisplayDropzones(e) => {
+                let element_jdepth = self.event_jdepth(e);
+                if element_jdepth.is_none() || ctx.props().jdepth != element_jdepth.unwrap() { return false }
+                
+                // Hide Dropzone on parent element
+                if element_jdepth.unwrap() > 0 {
+                    let direct_parent_link = ctx.link().get_parent().unwrap();
+                    let direct_parent = direct_parent_link.try_downcast::<EditableElement>().unwrap();
+                    direct_parent.send_message(Msg::HideDropzones);
+                }
+
                 self.is_dragging_in = true;
                 true
             },
             Msg::HideDropzones => {
+                // Hide Dropzone on parent element
+                let direct_parent_link = ctx.link().get_parent().unwrap();
+                let direct_parent = direct_parent_link.try_downcast::<EditableElement>();
+                if let Some(editable_element) = direct_parent {
+                    editable_element.send_message(Msg::HideDropzones)
+                }
+
                 self.is_dragging_in = false;
                 true
             }
@@ -799,6 +851,7 @@ impl Component for EditableElement {
                 info!("dropped in bottom");
                 true
             },
+            Msg::Noop => {false},
         }
     }
 
@@ -848,16 +901,22 @@ impl Component for EditableElement {
         }
 
         html! {
-            <@{tag} jrole = { "Judit_EditableElement" } class={ dropzone_class }
-                onmouseover = { link.callback( |_| Msg::DisplayDropzones )}
+            <@{tag} jrole = { "Judit_EditableElement" } class={ dropzone_class } jdepth={ctx.props().jdepth.to_string()} 
+                ondrag = { link.callback( |e: DragEvent| { e.prevent_default(); Msg::Noop } )}
+                ondragstart = { link.callback( |e: DragEvent| { e.prevent_default(); Msg::Noop } )}
+
+                onmouseover = { link.callback( |e| Msg::DisplayDropzones(e) )}
                 onmouseleave = { link.callback( |_| Msg::HideDropzones )}
-                onclick = { link.callback( |_| Msg::Select )}
+                onclick = { link.callback( |e| Msg::Select(e) )}
                 onmousedown = { link.batch_callback( |e| vec!(Msg::StartEditingWithCursor(e), Msg::EnableDropzones) )}
                 onmouseup = { link.batch_callback( |e| vec!(Msg::StopEditingWithCursor(e), Msg::DisableDropzones) )}
                 style={ style }>
-                { self.children.clone().into_iter().map(|c| 
-                    html_nested!{<EditableElement init_style={ c.style.clone() }></EditableElement>}).collect::<Html>() 
-                }
+                    // Nested Elements
+                    { for ctx.props().children.iter() } // for any children that might be given 
+                    { self.children.clone().into_iter().map(|c| // for layered EditableElements
+                        html_nested!{<EditableElement jdepth={ ctx.props().jdepth + 1 } init_style={ c.style.clone() }></EditableElement>}).collect::<Html>() 
+                    }
+                    // Editing Stuff
                     if self.is_selected {
                         if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
                             <EditableBorderRadiusSelector 
@@ -921,7 +980,7 @@ impl Component for EditableElement {
                             </TextEditPanel>
                         </EditToolsPanel>
                     }
-                    if self.is_dragging_in && !self.is_selected && self.parent_link.get_component().unwrap().is_dropzones_enabled {
+                    if self.is_dragging_in && !self.is_selected && self.parent_link.get_component().unwrap().global_conds.is_dropzones_enabled {
                         // align edges
                         <DropzoneTop/>
                         <DropzoneLeft/>
@@ -935,7 +994,6 @@ impl Component for EditableElement {
                         // no align
                         <DropzoneNoAlign/>
                     }
-                    { for ctx.props().children.iter() }
             </@>
         }
     }

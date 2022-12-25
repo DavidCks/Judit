@@ -37,7 +37,7 @@ pub enum Msg {
 #[derive(Properties, PartialEq)]
 pub struct DropzoneTopRightProps {
     #[prop_or_default]
-    pub onclick: Callback<MouseEvent>,
+    pub onmouseup: Callback<MouseEvent>,
 }
 
 impl Component for DropzoneTopRight {
@@ -54,7 +54,7 @@ impl Component for DropzoneTopRight {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
-            <svg onclick={ ctx.props().onclick.clone() } style={ self.style.inline() } class={ &self.hover_class } width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000">
+            <svg onmouseup={ ctx.props().onmouseup.clone() } style={ self.style.inline() } class={ &self.hover_class } width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000">
                 <path d="m7.99 4 .011.01M3.99 4l.011.01M3.99 8l.011.01M3.99 12l.011.01M3.99 16l.011.01M3.99 20l.011.01M7.99 20l.011.01M11.99 20l.011.01M15.99 20l.011.01M19.99 20l.011.01M19.99 16l.011.01M12 4h8v8h-8V4Zm3 4h1m1 0h-1m0 0V7m0 1v1" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
         }

@@ -1,5 +1,6 @@
 use log::{ info };
 use wasm_bindgen::JsCast;
+use yew::virtual_dom::VChild;
 use std::ops::Deref;
 use std::str::FromStr;
 //use log::info;
@@ -239,7 +240,17 @@ pub enum Msg {
     HideDropzones,
 
     // - with alignment
+    DropInTopLeft,
+    DropInTopRight,
+    DropInBottomLeft,
+    DropInBottomRight,
+    DropInTop,
+    DropInLeft,
+    DropInRight,
     DropInBottom,
+    // - without alignment
+    DropInNoAlign,
+    
 
     Noop,
 }
@@ -267,7 +278,7 @@ pub struct EditableElement {
 
     parent_link: Scope<super::super::App>,
     document: Document,
-    children: Vec<EditableElement>,
+    children: Vec<VChild<EditableElement>>,
 
     style: ComponentStyle,
     border_selector_style_topleft: BorderSelectorStyle,
@@ -309,6 +320,10 @@ pub struct EditableElement {
     is_selected: bool,
     render: bool,
 
+    // init style to be passed to child upon its creation
+    child_init_style: ComponentStyle,
+    immediate_parent_link: Option<Scope<EditableElement>>,
+
     // state
     previous_mouse_x: Option<i32>,
     previous_mouse_y: Option<i32>,
@@ -325,6 +340,17 @@ impl EditableElement {
             return None;
         }
     }
+
+    fn get_selected_link(&self) -> Option<Scope<EditableElement>>{
+        self.parent_link.get_component().unwrap().selected_child.clone()
+    }
+
+    fn hide_and_clone_selected(&self) -> EditableElement {
+        let selected_link = self.get_selected_link().unwrap();
+        selected_link.send_message(Msg::Delete);
+        let ref_selected_component = selected_link.get_component().unwrap();
+        ref_selected_component.deref().clone()
+    }
 }
 
 impl Component for EditableElement {
@@ -338,6 +364,14 @@ impl Component for EditableElement {
         while parent_link.is_none() {
             parent_any_link = parent_any_link.get_parent().expect("Error in recursive parent search").clone();
             parent_link = parent_any_link.try_downcast::<super::super::App>();
+        }
+
+        let mut init_style = ctx.props().init_style.clone();
+        let mut immediate_parent_link = None;
+        if ctx.props().jdepth > 0 {
+            immediate_parent_link = ctx.link().get_parent().expect("No Parent found").clone()
+                .try_downcast::<EditableElement>();
+            init_style = immediate_parent_link.clone().unwrap().get_component().unwrap().child_init_style.clone();
         }
 
         let initial_border_selector_style = append_to_string!( 
@@ -354,7 +388,7 @@ impl Component for EditableElement {
 
             children: Vec::new(),
 
-            style: ctx.props().init_style.clone(),
+            style: init_style,
             border_selector_style_topleft: initial_border_selector_style.clone(),
             border_selector_style_topright: initial_border_selector_style.clone(),
             border_selector_style_bottomleft: initial_border_selector_style.clone(),
@@ -391,6 +425,8 @@ impl Component for EditableElement {
 
             is_dragging_in: false,
 
+            child_init_style: ctx.props().init_style.clone(),
+            immediate_parent_link: immediate_parent_link,
             is_selected: false,
             render: true,
         }
@@ -649,36 +685,38 @@ impl Component for EditableElement {
                         }
                     }
                     EditStates::BorderRadius => {
-                        
+
+                        let max_radius = self.style.width.try_to_f64().unwrap();
+
                         if self.is_eidting_radius_topleft {
                             let relative_raidus: f64 = self.style.border_top_left_radius.try_to_f64().unwrap() + f64::from(offset_x);
 
-                            if relative_raidus.trunc() < 50_f64 && relative_raidus.trunc() >= 0_f64 {
-                                self.style.border_top_left_radius = format!("{}%", relative_raidus.trunc());
+                            if relative_raidus.trunc() < max_radius && relative_raidus.trunc() >= 0_f64 {
+                                self.style.border_top_left_radius = format!("{}px", relative_raidus.trunc());
                             }
                         }
 
                         if self.is_eidting_radius_topright {
                             let relative_raidus: f64 = self.style.border_top_right_radius.try_to_f64().unwrap() + f64::from(offset_x);
 
-                            if relative_raidus.trunc() < 50_f64 && relative_raidus.trunc() >= 0_f64 {
-                                self.style.border_top_right_radius = format!("{}%", relative_raidus.trunc());
+                            if relative_raidus.trunc() < max_radius && relative_raidus.trunc() >= 0_f64 {
+                                self.style.border_top_right_radius = format!("{}px", relative_raidus.trunc());
                             }
                         }
 
                         if self.is_eidting_radius_bottomleft {
                             let relative_raidus: f64 = self.style.border_bottom_left_radius.try_to_f64().unwrap() + f64::from(offset_x);
 
-                            if relative_raidus.trunc() < 50_f64 && relative_raidus.trunc() >= 0_f64 {
-                                self.style.border_bottom_left_radius = format!("{}%", relative_raidus.trunc());
+                            if relative_raidus.trunc() < max_radius && relative_raidus.trunc() >= 0_f64 {
+                                self.style.border_bottom_left_radius = format!("{}px", relative_raidus.trunc());
                             }
                         }
 
                         if self.is_eidting_radius_bottomright {
                             let relative_raidus: f64 = self.style.border_bottom_right_radius.try_to_f64().unwrap() + f64::from(offset_x);
 
-                            if relative_raidus.trunc() < 50_f64 && relative_raidus.trunc() >= 0_f64 {
-                                self.style.border_bottom_right_radius = format!("{}%", relative_raidus.trunc());
+                            if relative_raidus.trunc() < max_radius && relative_raidus.trunc() >= 0_f64 {
+                                self.style.border_bottom_right_radius = format!("{}px", relative_raidus.trunc());
                             }
                         }
 
@@ -841,14 +879,194 @@ impl Component for EditableElement {
                 self.parent_link.send_message(PMsg::DisableDropzones);
                 true
             }
+            Msg::DropInTopLeft => {
+                let mut selected_component = self.hide_and_clone_selected();
+
+                let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
+                let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
+                let parent_border_width = self.style.border_width.try_to_f64().unwrap();
+
+                selected_component.style.top = format!("{}px", -parent_border_width.trunc());
+                selected_component.style.left = format!("{}px", -parent_border_width.trunc());
+                selected_component.style.width = format!("{}px", parent_half_width.trunc());
+                selected_component.style.height = format!("{}px", parent_half_height.trunc());
+                self.child_init_style = selected_component.style;
+
+                let render_component = html_nested!{<EditableElement jdepth={ ctx.props().jdepth + 1 } />};
+                self.children.push( render_component );
+
+                self.parent_link.send_message(PMsg::IncrementGlobalCouter);
+                true
+            },
+            Msg::DropInTopRight => {
+                let mut selected_component = self.hide_and_clone_selected();
+
+                let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
+                let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
+                let parent_border_width = self.style.border_width.try_to_f64().unwrap();
+
+                selected_component.style.top = format!("{}px", -parent_border_width.trunc());
+                selected_component.style.left = format!("{}px", (parent_half_width - parent_border_width).trunc());
+                selected_component.style.width = format!("{}px", parent_half_width.trunc());
+                selected_component.style.height = format!("{}px", parent_half_height.trunc());
+                self.child_init_style = selected_component.style;
+
+                let render_component = html_nested!{<EditableElement jdepth={ ctx.props().jdepth + 1 } />};
+                self.children.push( render_component );
+
+                self.parent_link.send_message(PMsg::IncrementGlobalCouter);
+                info!("dropped topright");
+                true
+            },
+            Msg::DropInBottomLeft => {
+                let mut selected_component = self.hide_and_clone_selected();
+
+                let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
+                let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
+                let parent_border_width = self.style.border_width.try_to_f64().unwrap();
+
+                selected_component.style.top = format!("{}px", (parent_half_height - parent_border_width).trunc());
+                selected_component.style.left = format!("{}px", -parent_border_width.trunc());
+                selected_component.style.width = format!("{}px", parent_half_width.trunc());
+                selected_component.style.height = format!("{}px", parent_half_height.trunc());
+                self.child_init_style = selected_component.style;
+
+                let render_component = html_nested!{<EditableElement jdepth={ ctx.props().jdepth + 1 } />};
+                self.children.push( render_component );
+
+                self.parent_link.send_message(PMsg::IncrementGlobalCouter);
+                info!("dropped topright");
+                true
+            },
+            Msg::DropInBottomRight => {
+                let mut selected_component = self.hide_and_clone_selected();
+
+                let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
+                let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
+                let parent_border_width = self.style.border_width.try_to_f64().unwrap();
+
+                selected_component.style.top = format!("{}px", (parent_half_height - parent_border_width).trunc());
+                selected_component.style.left = format!("{}px", (parent_half_width - parent_border_width).trunc());
+                selected_component.style.width = format!("{}px", parent_half_width.trunc());
+                selected_component.style.height = format!("{}px", parent_half_height.trunc());
+                self.child_init_style = selected_component.style;
+
+                let render_component = html_nested!{<EditableElement jdepth={ ctx.props().jdepth + 1 } />};
+                self.children.push( render_component );
+
+                self.parent_link.send_message(PMsg::IncrementGlobalCouter);
+                info!("dropped topright");
+                true
+            },
+            Msg::DropInTop => {
+                let mut selected_component = self.hide_and_clone_selected();
+
+                let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
+                let parent_border_width = self.style.border_width.try_to_f64().unwrap();
+
+                selected_component.style.top = format!("{}px", -parent_border_width.trunc());
+                selected_component.style.left = format!("{}px", -parent_border_width.trunc());
+                selected_component.style.width = self.style.width.clone();
+                selected_component.style.height = format!("{}px", parent_half_height.trunc());
+                self.child_init_style = selected_component.style;
+
+                let render_component = html_nested!{<EditableElement jdepth={ ctx.props().jdepth + 1 } />};
+                self.children.push( render_component );
+
+                self.parent_link.send_message(PMsg::IncrementGlobalCouter);
+                info!("dropped topright");
+                true
+            },
+            Msg::DropInLeft => {
+                let mut selected_component = self.hide_and_clone_selected();
+
+                let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
+                let parent_border_width = self.style.border_width.try_to_f64().unwrap();
+
+                selected_component.style.top = format!("{}px", -parent_border_width.trunc());
+                selected_component.style.left = format!("{}px", -parent_border_width.trunc());
+                selected_component.style.width = format!("{}px", parent_half_width.trunc());
+                selected_component.style.height = self.style.height.clone();
+                self.child_init_style = selected_component.style;
+
+                let render_component = html_nested!{<EditableElement jdepth={ ctx.props().jdepth + 1 } />};
+                self.children.push( render_component );
+
+                self.parent_link.send_message(PMsg::IncrementGlobalCouter);
+                info!("dropped topright");
+                true
+            },
+            Msg::DropInRight => {
+                let mut selected_component = self.hide_and_clone_selected();
+
+                let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
+                let parent_border_width = self.style.border_width.try_to_f64().unwrap();
+
+                selected_component.style.top = format!("{}px", -parent_border_width.trunc());
+                selected_component.style.left = format!("{}px", (parent_half_width - parent_border_width).trunc());
+                selected_component.style.width = format!("{}px", parent_half_width.trunc());
+                selected_component.style.height = self.style.height.clone();
+                self.child_init_style = selected_component.style;
+
+                let render_component = html_nested!{<EditableElement jdepth={ ctx.props().jdepth + 1 } />};
+                self.children.push( render_component );
+
+                self.parent_link.send_message(PMsg::IncrementGlobalCouter);
+                info!("dropped topright");
+                true
+            },
             Msg::DropInBottom => {
-                let selected_link = self.parent_link.get_component().unwrap().selected_child.clone().unwrap();
-                selected_link.send_message(Msg::Delete);
+                let mut selected_component = self.hide_and_clone_selected();
 
-                let selected_component = selected_link.get_component().unwrap();
-                self.children.push( selected_component.deref().clone() );
+                let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
+                let parent_border_width = self.style.border_width.try_to_f64().unwrap();
 
-                info!("dropped in bottom");
+                selected_component.style.top = format!("{}px", (parent_half_height - parent_border_width).trunc());
+                selected_component.style.left = format!("{}px", -parent_border_width.trunc());
+                selected_component.style.width = self.style.width.clone();
+                selected_component.style.height = format!("{}px", parent_half_height.trunc());
+                self.child_init_style = selected_component.style;
+
+                let render_component = html_nested!{<EditableElement jdepth={ ctx.props().jdepth + 1 } />};
+                self.children.push( render_component );
+
+                self.parent_link.send_message(PMsg::IncrementGlobalCouter);
+                info!("dropped topright");
+                true
+            },
+            Msg::DropInNoAlign => {
+                let mut selected_component = self.hide_and_clone_selected();
+
+                let selected_top_f64 = selected_component.style.top.try_to_f64().unwrap();
+                let selected_left_f64 = selected_component.style.left.try_to_f64().unwrap();
+                let mut parent_top_f64 = self.style.top.try_to_f64().unwrap();
+                let mut parent_left_f64 = self.style.left.try_to_f64().unwrap();
+                
+                let mut calc_top_f64 = selected_top_f64 - parent_top_f64;
+                let mut calc_left_f64 = selected_left_f64 - parent_left_f64;
+
+                let mut immediate_parent_link = self.immediate_parent_link.clone();
+                while !immediate_parent_link.is_none() {
+                    
+                    let immediate_parent_comp_link = immediate_parent_link.clone().unwrap();
+                    let immediate_parent_comp = immediate_parent_comp_link.get_component().unwrap();
+                    parent_top_f64 = immediate_parent_comp.style.top.try_to_f64().unwrap();
+                    parent_left_f64 = immediate_parent_comp.style.left.try_to_f64().unwrap();
+                    calc_top_f64 -= parent_top_f64;
+                    calc_left_f64 -= parent_left_f64;
+
+                    immediate_parent_link = immediate_parent_comp.immediate_parent_link.clone();
+                }
+
+                selected_component.style.top = format!("{}px", calc_top_f64);
+                selected_component.style.left = format!("{}px", calc_left_f64);
+                self.child_init_style = selected_component.style;
+
+                let render_component = html_nested!{<EditableElement jdepth={ ctx.props().jdepth + 1 } />};
+                self.children.push( render_component );
+
+                self.parent_link.send_message(PMsg::IncrementGlobalCouter);
+                info!("dropped topright");
                 true
             },
             Msg::Noop => {false},
@@ -913,9 +1131,7 @@ impl Component for EditableElement {
                 style={ style }>
                     // Nested Elements
                     { for ctx.props().children.iter() } // for any children that might be given 
-                    { self.children.clone().into_iter().map(|c| // for layered EditableElements
-                        html_nested!{<EditableElement jdepth={ ctx.props().jdepth + 1 } init_style={ c.style.clone() }></EditableElement>}).collect::<Html>() 
-                    }
+                    { for self.children.clone().into_iter() } // for nested stuff
                     // Editing Stuff
                     if self.is_selected {
                         if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
@@ -982,17 +1198,17 @@ impl Component for EditableElement {
                     }
                     if self.is_dragging_in && !self.is_selected && self.parent_link.get_component().unwrap().global_conds.is_dropzones_enabled {
                         // align edges
-                        <DropzoneTop/>
-                        <DropzoneLeft/>
-                        <DropzoneRight/>
+                        <DropzoneTop onmouseup={link.callback(|_| Msg::DropInTop )}/>
+                        <DropzoneLeft onmouseup={link.callback(|_| Msg::DropInLeft )}/>
+                        <DropzoneRight onmouseup={link.callback(|_| Msg::DropInRight )}/>
                         <DropzoneBottom onmouseup={link.callback(|_| Msg::DropInBottom )}/>
                         // align corners
-                        <DropzoneTopLeft/>
-                        <DropzoneTopRight/>
-                        <DropzoneBottomLeft/>
-                        <DropzoneBottomRight/>
+                        <DropzoneTopLeft onmouseup={link.callback(|_| Msg::DropInTopLeft )}/>
+                        <DropzoneTopRight onmouseup={link.callback(|_| Msg::DropInTopRight )}/>
+                        <DropzoneBottomLeft onmouseup={link.callback(|_| Msg::DropInBottomLeft )}/>
+                        <DropzoneBottomRight onmouseup={link.callback(|_| Msg::DropInBottomRight )}/>
                         // no align
-                        <DropzoneNoAlign/>
+                        <DropzoneNoAlign onmouseup={link.callback(|_| Msg::DropInNoAlign )}/>
                     }
             </@>
         }

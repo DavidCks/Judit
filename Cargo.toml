@@ -42,6 +42,5 @@ log = "0.4.6"
 # used for the convenience of not having to write .to_string() after every &str
 append_to_string = "0.1.0"
 
-
 [dev-dependencies]
 

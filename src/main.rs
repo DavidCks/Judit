@@ -30,7 +30,7 @@ impl Style for CanvasStyle {
                 min_width: "100vw",
                 width: "auto",
                 opacity: "1",
-                transform_style: "preserve-3d"
+                transform_style: "initial"
             }
         )
     }
@@ -44,6 +44,8 @@ pub enum Msg {
     AddElement(JTypes),
     EnableDropzones,
     DisableDropzones,
+    IncrementGlobalCouter,
+    DecrementGlobalCounter,
 }
 
 struct App {
@@ -52,6 +54,7 @@ struct App {
     selected_child: Option<Scope<EditableElement>>,
     children: Vec<Html>,
     global_conds: GlobalConditions,
+    global_counter: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -72,11 +75,12 @@ impl Component for App {
             children: vec!( html!(<EditableElement></EditableElement>) ),
             global_conds: GlobalConditions {
                 is_dropzones_enabled: false,
-            }
+            },
+            global_counter: 0,
         }
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::ReceiveSelectedChildLink(child_scope) => {
                 // Deselect current child
@@ -106,6 +110,7 @@ impl Component for App {
             }
             Msg::AddElement(jtype) => {
                 self.children.push( html!(<EditableElement jtype={jtype} />) ); 
+                ctx.link().send_message(Msg::IncrementGlobalCouter);
                 true
             }
             Msg::EnableDropzones => {
@@ -114,8 +119,10 @@ impl Component for App {
             },
             Msg::DisableDropzones => {
                 self.global_conds.is_dropzones_enabled = false;
-                false
+                true
             }
+            Msg::IncrementGlobalCouter => { self.global_counter += 1; false },
+            Msg::DecrementGlobalCounter => { self.global_counter -= 1; false },
         }
     }
 

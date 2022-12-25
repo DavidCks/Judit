@@ -72,6 +72,9 @@ impl Component for Transform3DSelector {
         let red_base_style = "opacity: .33;";
         let blue_base_style = "opacity: .33;";
         let green_base_style = "opacity: .5;";
+        let red_color = "#3e3e3e";
+        let blue_color = "#3e3e3e";
+        let green_color = "#3e3e3e";
 
         // x-axis
         let x1_style = format!("{} {} transform: rotateY(90deg) rotateX({}deg);", rotation_disc_base_style, red_base_style, faning);
@@ -96,47 +99,47 @@ impl Component for Transform3DSelector {
         let rotate_z_jrole = "Judit_Transform3DSelector_Rotate_Z";
 
         html! {
-            <div style={ format!("{} width: {r2}px; height: {r2}px", self.style.inline(), r2 = self.radius*2 ) }>
+            <div style={ format!("{} width: {r2}px; height: {r2}px;", self.style.inline(), r2 = self.radius*2 ) }>
                 // x-axis spanning disc
                 <svg style={x1_style} jrole="Judit_EditableElement" axis="X" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_y_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="red" />
+                    <circle jrole={ rotate_y_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ red_color } />
                 </svg>
                 <svg style={x2_style} jrole="Judit_EditableElement" axis="X" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_y_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="red" />
+                    <circle jrole={ rotate_y_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ red_color } />
                 </svg>
                 <svg style={x3_style} jrole="Judit_EditableElement" axis="X" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_y_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="red" />
+                    <circle jrole={ rotate_y_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ red_color } />
                 </svg>
                 <svg style={x4_style} jrole="Judit_EditableElement" axis="X" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_y_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="red" />
+                    <circle jrole={ rotate_y_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ red_color } />
                 </svg>
 
                 // y-axis spanning disc
                 <svg style={y1_style} jrole="Judit_EditableElement" axis="Y" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_x_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="blue" />
+                    <circle jrole={ rotate_x_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ blue_color } />
                 </svg>
                 <svg style={y2_style} jrole="Judit_EditableElement" axis="Y" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_x_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="blue" />
+                    <circle jrole={ rotate_x_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ blue_color } />
                 </svg>
                 <svg style={y3_style} jrole="Judit_EditableElement" axis="Y" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_x_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="blue" />
+                    <circle jrole={ rotate_x_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ blue_color } />
                 </svg>
                 <svg style={y4_style} jrole="Judit_EditableElement" axis="Y" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_x_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="blue" />
+                    <circle jrole={ rotate_x_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ blue_color } />
                 </svg>
 
                 // z-axis spanning disc
                 <svg style={z1_style} jrole="Judit_EditableElement" axis="Z" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_z_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="green" />
+                    <circle jrole={ rotate_z_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ green_color } />
                 </svg>
                 <svg style={z2_style} jrole="Judit_EditableElement" axis="Z" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_z_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="green" />
+                    <circle jrole={ rotate_z_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ green_color } />
                 </svg>
                 <svg style={z3_style} jrole="Judit_EditableElement" axis="Z" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_z_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="green" />
+                    <circle jrole={ rotate_z_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ green_color } />
                 </svg>
                 <svg style={z4_style} jrole="Judit_EditableElement" axis="Z" height={ (self.radius * 2).to_string() } width={ (self.radius * 2).to_string() }>
-                    <circle jrole={ rotate_z_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill="green" />
+                    <circle jrole={ rotate_z_jrole } cx={ self.radius.to_string() } cy={ self.radius.to_string() } r={ self.radius.to_string() } fill={ green_color } />
                 </svg>
 
             </div> 

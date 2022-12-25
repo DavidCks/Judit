@@ -104,7 +104,6 @@ pub struct ComponentStyle {
     background_color: String,
 
     transform_origin: String,
-    transform_style: String,
     transform: Transform,
 
     border_top_left_radius: String,
@@ -141,7 +140,6 @@ impl Style for ComponentStyle {
                 height: "200px",
                 background_color: "#EEEEEE",
                 transform_origin: "50% 50%",
-                transform_style: "preserve-3d",
                 transform: Transform { 
                     skewX: "0deg",
                     skewY: "0deg",
@@ -303,6 +301,7 @@ pub struct EditableElement {
     is_eidting_radius_bottomleft: bool,
     is_eidting_radius_bottomright: bool,
 
+    edit_mode_3d_rx_ry: bool, // (/\ | \/ = rotateX, < | > = rotateY) determines if mouse movements should be mapped for x and y simultaneously, disregarding the clicked disk 
     is_editing_3d: bool,
     is_editing_3d_rotate_x: bool,
     is_editing_3d_rotate_y: bool,
@@ -407,6 +406,7 @@ impl Component for EditableElement {
             is_resizeable_top: false,
             is_resizeable_bottom: false,
 
+            edit_mode_3d_rx_ry: true,
             is_eidting_radius: false,
             is_eidting_radius_bottomleft: false,
             is_eidting_radius_bottomright: false,
@@ -630,7 +630,7 @@ impl Component for EditableElement {
                 let offset_x = parent_e.page_x() - self.previous_mouse_x.unwrap_or( parent_e.page_x() );
                 let offset_y = parent_e.page_y() - self.previous_mouse_y.unwrap_or( parent_e.page_y() );
 
-                match self.editing_state {
+                (|| match self.editing_state {
                     EditStates::Move => {
                         // calculate relative x and y positions for the offset in css
                         let relative_x: f64 = self.style.left.try_to_f64().unwrap() + f64::from(offset_x);
@@ -719,11 +719,20 @@ impl Component for EditableElement {
                                 self.style.border_bottom_right_radius = format!("{}px", relative_raidus.trunc());
                             }
                         }
-
-                        
                     }
                     EditStates::Edit3D => {
                         if self.is_editing_3d {
+                            if self.edit_mode_3d_rx_ry {
+                                let relative_x_rotation: f64 = self.style.transform.rotateX.try_to_f64().unwrap() - f64::from(offset_y);
+                                self.style.transform.rotateX = format!("{}deg", relative_x_rotation.trunc());
+
+                                let relative_y_rotation: f64 = self.style.transform.rotateY.try_to_f64().unwrap() + f64::from(offset_x);
+                                self.style.transform.rotateY = format!("{}deg", relative_y_rotation.trunc());
+
+                                return;
+                            } 
+
+                            // standard 3d edit mode
                             if self.is_editing_3d_rotate_x {
                                 let relative_x_rotation: f64 = self.style.transform.rotateX.try_to_f64().unwrap() - f64::from(offset_x) - f64::from(offset_y);
                                 self.style.transform.rotateX = format!("{}deg", relative_x_rotation.trunc());
@@ -761,7 +770,7 @@ impl Component for EditableElement {
                     EditStates::None => {
 
                     }
-                }
+                })();
 
                 // store previous mouse position
                 self.previous_mouse_x = Some( parent_e.page_x() );

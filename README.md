@@ -1,4 +1,4 @@
-<h1 align="center">Judit</h1>
+<h1 align="center"><img alt="Judit" src="Logo.jpg"/></h1>
 
 <h3 align="center">A no-code editor written with yew in the Rust language</h3>
 

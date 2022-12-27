@@ -10,9 +10,7 @@ use crate::components::static_styles::Selected::Selected as SelectedStyle;
 #[allow(non_snake_case, non_camel_case_types)]
 #[derive(Reflect)]
 struct FontPickerStyle_focus {
-    border_width: String,
-    border_color: String,
-    border_style: String,    
+    box_shadow: String,   
 }
 
 impl Style for FontPickerStyle_focus {
@@ -22,9 +20,7 @@ impl Style for FontPickerStyle_focus {
 
         append_to_string!(
             Self {
-                border_width: selected_style.border_width.clone(),
-                border_color: selected_style.border_color,
-                border_style: "solid",
+               box_shadow: selected_style.box_shadow,
             }
         )
     }
@@ -36,9 +32,8 @@ struct FontPickerStyle {
     position: String,
     grid_column: String,
     border_radius: String,
-    border_style: String,
-    border_width: String,
-    border_color: String,
+    border: String,
+    padding: String,
     background_color: String,
     font_size: String,
     appearance: String,
@@ -47,18 +42,14 @@ struct FontPickerStyle {
 impl Style for FontPickerStyle {
     fn create() -> Self {
 
-        let selected_style = SelectedStyle::create();
-
         append_to_string!(
             Self {
                 position: "initial",
                 grid_column: "span 4",
-
-                border_style: "solid",
-                border_color: "#EEEEEE00",
-                border_width: selected_style.border_width.clone(),
                 border_radius: "10px",
-                background_color: "#EEEEEE",
+                border: "none",
+                padding: "0px 2px 0px 2px",
+                background_color: "#EEEEEE00",
                 font_size: "1rem",
 
                 //arrow

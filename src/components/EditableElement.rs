@@ -268,6 +268,8 @@ pub struct EditableElement {
     tag: String,
     inner_html: Html,
 
+    absolute_top: f64,
+    absolute_left: f64,
     style: ComponentStyle,
     border_selector_style_topleft: BorderSelectorStyle,
     border_selector_style_topright: BorderSelectorStyle,
@@ -371,11 +373,19 @@ impl Component for EditableElement {
         }
 
         let mut init_style = ctx.props().init_style.clone();
+        let mut abs_top = init_style.top.try_to_f64().unwrap();
+        let mut abs_left = init_style.left.try_to_f64().unwrap();
+        // take the child_init_style of the parent if the parent is an EditableElement
         let mut immediate_parent_link = None;
         if ctx.props().jdepth > 0 {
             immediate_parent_link = ctx.link().get_parent().expect("No Parent found").clone()
                 .try_downcast::<EditableElement>();
             init_style = immediate_parent_link.clone().unwrap().get_component().unwrap().child_init_style.clone();
+            
+            let unwraped_immediate_parent_link = immediate_parent_link.clone().unwrap();
+            let immediate_parent_comp = unwraped_immediate_parent_link.get_component().unwrap();
+            abs_top = init_style.top.try_to_f64().unwrap() + immediate_parent_comp.absolute_top;
+            abs_left = init_style.top.try_to_f64().unwrap() + immediate_parent_comp.absolute_left;
         }
 
         let initial_border_selector_style = append_to_string!( 
@@ -417,6 +427,8 @@ impl Component for EditableElement {
             inner_html: inner_html,
             children: Vec::new(),
 
+            absolute_top: abs_top,
+            absolute_left: abs_left,
             style: init_style,
             border_selector_style_topleft: initial_border_selector_style.clone(),
             border_selector_style_topright: initial_border_selector_style.clone(),
@@ -1143,26 +1155,13 @@ impl Component for EditableElement {
             Msg::DropInNoAlign => {
                 let mut selected_component = self.hide_and_clone_selected();
 
-                let selected_top_f64 = selected_component.style.top.try_to_f64().unwrap();
-                let selected_left_f64 = selected_component.style.left.try_to_f64().unwrap();
-                let mut parent_top_f64 = self.style.top.try_to_f64().unwrap();
-                let mut parent_left_f64 = self.style.left.try_to_f64().unwrap();
+                let selected_abs_top = selected_component.absolute_top;
+                let selected_abs_left = selected_component.absolute_left;
+                let parent_abs_top = self.absolute_top;
+                let parent_abs_left = self.absolute_left;
                 
-                let mut calc_top_f64 = selected_top_f64 - parent_top_f64;
-                let mut calc_left_f64 = selected_left_f64 - parent_left_f64;
-
-                let mut immediate_parent_link = self.immediate_parent_link.clone();
-                while !immediate_parent_link.is_none() {
-                    
-                    let immediate_parent_comp_link = immediate_parent_link.clone().unwrap();
-                    let immediate_parent_comp = immediate_parent_comp_link.get_component().unwrap();
-                    parent_top_f64 = immediate_parent_comp.style.top.try_to_f64().unwrap();
-                    parent_left_f64 = immediate_parent_comp.style.left.try_to_f64().unwrap();
-                    calc_top_f64 -= parent_top_f64;
-                    calc_left_f64 -= parent_left_f64;
-
-                    immediate_parent_link = immediate_parent_comp.immediate_parent_link.clone();
-                }
+                let calc_top_f64 = selected_abs_top - parent_abs_top;
+                let calc_left_f64 = selected_abs_left - parent_abs_left;
 
                 selected_component.style.top = format!("{}px", calc_top_f64);
                 selected_component.style.left = format!("{}px", calc_left_f64);
@@ -1211,115 +1210,100 @@ impl Component for EditableElement {
         }
 
         html! {
-            <>
-                <@{self.tag.clone()} jrole = { "Judit_EditableElement" } jdepth={ctx.props().jdepth.to_string()} 
-                ondrag = { link.callback( |e: DragEvent| { e.prevent_default(); Msg::Noop } )}
-                ondragstart = { link.callback( |e: DragEvent| { e.prevent_default(); Msg::Noop } )}
+            <@{self.tag.clone()} jrole = { "Judit_EditableElement" } jdepth={ctx.props().jdepth.to_string()} 
+            ondrag = { link.callback( |e: DragEvent| { e.prevent_default(); Msg::Noop } )}
+            ondragstart = { link.callback( |e: DragEvent| { e.prevent_default(); Msg::Noop } )}
 
-                onmouseover = { link.callback( |e| Msg::DisplayDropzones(e) )}
-                onmouseleave = { link.callback( |_| Msg::HideDropzones )}
-                onclick = { link.batch_callback( |e: MouseEvent| vec![Msg::ShowOverlay(e) ])}
-                onmousedown = { link.batch_callback( |e| { vec!(Msg::StartEditingWithCursor(e), Msg::EnableDropzones) })}
-                onmouseup = { link.batch_callback( |e| vec!(Msg::StopEditingWithCursor(e), Msg::DisableDropzones) )}
-                style={ style }>
-                    { self.inner_html.clone() } //initial inner html based on tag / jtype
-                    // Nested Elements
-                    { self.children.iter().map(|child| EditableElement::from_link(child, self.jdepth + 1)).collect::<Html>()} // for nested stuff
-                    { for ctx.props().children.iter() } // for any children that might be given 
-                    // Editing Stuff
-                </@>
-                <div jdepth={ctx.props().jdepth.to_string()} jrole={"Judit_EditableElement"}
-                ondrag = { link.callback( |e: DragEvent| { e.prevent_default(); Msg::Noop } )}
-                ondragstart = { link.callback( |e: DragEvent| { e.prevent_default(); Msg::Noop } )}
-
-                onmouseover = { link.callback( |e| Msg::DisplayDropzones(e) )}
-                onmouseleave = { link.callback( |_| Msg::HideDropzones )}
-                onclick = { link.callback( |e| Msg::Select(e) )}
-                onmousedown = { link.batch_callback( |e| vec!(Msg::StartEditingWithCursor(e), Msg::EnableDropzones) )}
-                onmouseup = { link.batch_callback( |e| vec!(Msg::StopEditingWithCursor(e), Msg::DisableDropzones) )}
-
-                style={ format!("z-index: {}; position: {}; top: {}; left: {}; width: {}; height: {};",
-                overlay_z_index, self.style.position, self.style.top, self.style.left, self.style.width, self.style.height )}> // drag and drop box
-                    if self.is_selected {
-                        if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
-                            <EditableBorderRadiusSelector 
-                                position = {ebrsPositions::TopLeft} 
-                                border = { self.border_selector_style_topleft.clone() }/>
-                            <EditableBorderRadiusSelector 
-                                position = {ebrsPositions::TopRight}
-                                border = { self.border_selector_style_topright.clone() }/>
-                            <EditableBorderRadiusSelector 
-                                position = {ebrsPositions::BottomLeft}
-                                border = { self.border_selector_style_bottomleft.clone() }/>
-                            <EditableBorderRadiusSelector 
-                                position = {ebrsPositions::BottomRight}
-                                border = { self.border_selector_style_bottomright.clone() }/>
-                            if self. is_editing_3d {
-                                <Transform3DSelector/>
-                            }
-                        }
-                        
-                        <DeleteButton parent_transform={ self.style.transform.clone() } onclick={ link.callback(|_| Msg::Delete )}/>
-                        // Edit Controls below the EditableElements
-                        <EditControls parent_transform={ self.style.transform.clone() }>
-                            if self.is_editing_3d {
-                                <Transform2DToggle onclick={link.callback(|_| Msg::Transform2DToggle )} />
-                            } else {
-                                <Transform3DToggle onclick={link.callback(|_| Msg::Transform3DToggle )} />
-                            }
-                        </EditControls>
-                        <EditToolsPanel parent_transform={ self.style.transform.clone() } >
-                            <TextEditPanel>
-                                <AlignRightButton onclick={link.callback(|_| Msg::AlignTextRight )}/>
-                                <AlignCenterButton onclick={link.callback(|_| Msg::AlignTextCenter )}/>
-                                <AlignJustifyButton onclick={link.callback(|_| Msg::AlignTextJustify )}/>
-                                <AlignLeftButton onclick={link.callback(|_| Msg::AlignTextLeft )}/>
-
-                                <StyleBoldButton onclick={link.callback(|_| Msg::StyleTextBold )}/>
-                                <StyleItalicButton onclick={link.callback(|_| Msg::StyleTextItalic )}/>
-                                <StyleUnderlineButton onclick={link.callback(|_| Msg::StyleTextUnderline )}/>
-                                <StyleSizeButton onclick={link.callback(|_| Msg::StyleTextSize )}/>
-
-                                <SpacingLinesButton onclick={link.callback(|_| Msg::SpacingLines )}/>
-                                <SpacingWordsButton onclick={link.callback(|_| Msg::SpacingWords )}/>
-                                <SpacingLettersButton onclick={link.callback(|_| Msg::SpacingLetters )}/>
-                                {   match self.style.writing_mode.as_str() {
-                                        "horizontal-tb" => {
-                                            html!{<RightAlignedVerticalText onclick={link.callback(|_| Msg::TextDirectionRLVertical )}/>}
-                                        },
-                                        "vertical-rl" => {
-                                            html!{<LeftAlignedVerticalText onclick={link.callback(|_| Msg::TextDirectionLRVertical )}/>}
-                                        },
-                                        "vertical-lr" => {
-                                            html!{<LeftAlignedHorizontalText onclick={link.callback(|_| Msg::TextDirectionLRHorizontal )}/>}
-                                        },
-                                        
-                                        &_ => {
-                                            todo!()
-                                        }
-                                    }
-                                }
-                                <FontPicker onchange={link.callback(|e| Msg::PickFont(e) )}/>
-                            </TextEditPanel>
-                        </EditToolsPanel>
-                    } else {
-                        if self.is_dragging_in && self.parent_link.get_component().unwrap().global_conds.is_dropzones_enabled {
-                            // align edges
-                            <DropzoneTop onmouseup={link.callback(|_| Msg::DropInTop )}/>
-                            <DropzoneLeft onmouseup={link.callback(|_| Msg::DropInLeft )}/>
-                            <DropzoneRight onmouseup={link.callback(|_| Msg::DropInRight )}/>
-                            <DropzoneBottom onmouseup={link.callback(|_| Msg::DropInBottom )}/>
-                            // align corners
-                            <DropzoneTopLeft onmouseup={link.callback(|_| Msg::DropInTopLeft )}/>
-                            <DropzoneTopRight onmouseup={link.callback(|_| Msg::DropInTopRight )}/>
-                            <DropzoneBottomLeft onmouseup={link.callback(|_| Msg::DropInBottomLeft )}/>
-                            <DropzoneBottomRight onmouseup={link.callback(|_| Msg::DropInBottomRight )}/>
-                            // no align
-                            <DropzoneNoAlign onmouseup={link.callback(|_| Msg::DropInNoAlign )}/>
+            onmouseover = { link.callback( |e| Msg::DisplayDropzones(e) )}
+            onmouseleave = { link.callback( |_| Msg::HideDropzones )}
+            onclick = { link.batch_callback( |e: MouseEvent| vec![Msg::Select(e) ])}
+            onmousedown = { link.batch_callback( |e| { vec!(Msg::StartEditingWithCursor(e), Msg::EnableDropzones) })}
+            onmouseup = { link.batch_callback( |e| vec!(Msg::StopEditingWithCursor(e), Msg::DisableDropzones) )}
+            style={ style }>
+                { self.inner_html.clone() } //initial inner html based on tag / jtype
+                // Nested Elements
+                { self.children.iter().map(|child| EditableElement::from_link(child, self.jdepth + 1)).collect::<Html>()} // for nested stuff
+                { for ctx.props().children.iter() } // for any children that might be given 
+                // Editing Stuff
+                if self.is_selected {
+                    if self.style.width.try_to_f64().unwrap() > 20_f64 && self.style.height.try_to_f64().unwrap() > 20_f64 {
+                        <EditableBorderRadiusSelector 
+                            position = {ebrsPositions::TopLeft} 
+                            border = { self.border_selector_style_topleft.clone() }/>
+                        <EditableBorderRadiusSelector 
+                            position = {ebrsPositions::TopRight}
+                            border = { self.border_selector_style_topright.clone() }/>
+                        <EditableBorderRadiusSelector 
+                            position = {ebrsPositions::BottomLeft}
+                            border = { self.border_selector_style_bottomleft.clone() }/>
+                        <EditableBorderRadiusSelector 
+                            position = {ebrsPositions::BottomRight}
+                            border = { self.border_selector_style_bottomright.clone() }/>
+                        if self. is_editing_3d {
+                            <Transform3DSelector/>
                         }
                     }
-                </div>
-            </>
+                    
+                    <DeleteButton parent_transform={ self.style.transform.clone() } onclick={ link.callback(|_| Msg::Delete )}/>
+                    // Edit Controls below the EditableElements
+                    <EditControls parent_transform={ self.style.transform.clone() }>
+                        if self.is_editing_3d {
+                            <Transform2DToggle onclick={link.callback(|_| Msg::Transform2DToggle )} />
+                        } else {
+                            <Transform3DToggle onclick={link.callback(|_| Msg::Transform3DToggle )} />
+                        }
+                    </EditControls>
+                    <EditToolsPanel parent_transform={ self.style.transform.clone() } >
+                        <TextEditPanel>
+                            <AlignRightButton onclick={link.callback(|_| Msg::AlignTextRight )}/>
+                            <AlignCenterButton onclick={link.callback(|_| Msg::AlignTextCenter )}/>
+                            <AlignJustifyButton onclick={link.callback(|_| Msg::AlignTextJustify )}/>
+                            <AlignLeftButton onclick={link.callback(|_| Msg::AlignTextLeft )}/>
+
+                            <StyleBoldButton onclick={link.callback(|_| Msg::StyleTextBold )}/>
+                            <StyleItalicButton onclick={link.callback(|_| Msg::StyleTextItalic )}/>
+                            <StyleUnderlineButton onclick={link.callback(|_| Msg::StyleTextUnderline )}/>
+                            <StyleSizeButton onclick={link.callback(|_| Msg::StyleTextSize )}/>
+
+                            <SpacingLinesButton onclick={link.callback(|_| Msg::SpacingLines )}/>
+                            <SpacingWordsButton onclick={link.callback(|_| Msg::SpacingWords )}/>
+                            <SpacingLettersButton onclick={link.callback(|_| Msg::SpacingLetters )}/>
+                            {   match self.style.writing_mode.as_str() {
+                                    "horizontal-tb" => {
+                                        html!{<RightAlignedVerticalText onclick={link.callback(|_| Msg::TextDirectionRLVertical )}/>}
+                                    },
+                                    "vertical-rl" => {
+                                        html!{<LeftAlignedVerticalText onclick={link.callback(|_| Msg::TextDirectionLRVertical )}/>}
+                                    },
+                                    "vertical-lr" => {
+                                        html!{<LeftAlignedHorizontalText onclick={link.callback(|_| Msg::TextDirectionLRHorizontal )}/>}
+                                    },
+                                    
+                                    &_ => {
+                                        todo!()
+                                    }
+                                }
+                            }
+                            <FontPicker onchange={link.callback(|e| Msg::PickFont(e) )}/>
+                        </TextEditPanel>
+                    </EditToolsPanel>
+                } else {
+                    if self.is_dragging_in && self.parent_link.get_component().unwrap().global_conds.is_dropzones_enabled {
+                        // align edges
+                        <DropzoneTop onmouseup={link.callback(|_| Msg::DropInTop )}/>
+                        <DropzoneLeft onmouseup={link.callback(|_| Msg::DropInLeft )}/>
+                        <DropzoneRight onmouseup={link.callback(|_| Msg::DropInRight )}/>
+                        <DropzoneBottom onmouseup={link.callback(|_| Msg::DropInBottom )}/>
+                        // align corners
+                        <DropzoneTopLeft onmouseup={link.callback(|_| Msg::DropInTopLeft )}/>
+                        <DropzoneTopRight onmouseup={link.callback(|_| Msg::DropInTopRight )}/>
+                        <DropzoneBottomLeft onmouseup={link.callback(|_| Msg::DropInBottomLeft )}/>
+                        <DropzoneBottomRight onmouseup={link.callback(|_| Msg::DropInBottomRight )}/>
+                        // no align
+                        <DropzoneNoAlign onmouseup={link.callback(|_| Msg::DropInNoAlign )}/>
+                    }
+                }
+            </@>
         }
     }
 }

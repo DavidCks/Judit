@@ -52,7 +52,6 @@ struct App {
     style: CanvasStyle,
     children_links: Vec<Scope<EditableElement>>,
     selected_child: Option<Scope<EditableElement>>,
-    previous_selected_child: Option<Scope<EditableElement>>,
     children: Vec<Html>,
     global_conds: GlobalConditions,
     global_counter: u32,
@@ -73,7 +72,6 @@ impl Component for App {
             style: CanvasStyle::create(),
             children_links: Vec::new(),
             selected_child: None,
-            previous_selected_child: None,
             children: vec!( html!(<EditableElement></EditableElement>) ),
             global_conds: GlobalConditions {
                 is_dropzones_enabled: false,
@@ -84,21 +82,12 @@ impl Component for App {
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::ReceiveSelectedChildLink(new_scope) => {
-                self.previous_selected_child = self.selected_child.clone();
-
+            Msg::ReceiveSelectedChildLink(child_scope) => {
                 // Deselect current child
-                if let Some(current_scope) = self.selected_child.as_ref() {
-                    let selected_jdepth = current_scope.get_component().unwrap().jdepth;
-                    let new_selected_jdepth = new_scope.get_component().unwrap().jdepth;
-                    if new_selected_jdepth > selected_jdepth {
-                        current_scope.send_message_batch(vec![CMsg::Deselect, CMsg::HideOverlay]);
-                    } else  {
-                        current_scope.send_message_batch(vec![CMsg::Deselect]);
-                    }
+                if let Some(link) = self.selected_child.as_ref() {
+                    link.send_message(CMsg::Deselect);
                 }
-                self.selected_child = Some( new_scope.clone() );
-                new_scope.send_message(CMsg::ShowOverlayUnchecked);
+                self.selected_child = Some( child_scope );
                 false
             }
             Msg::ReceiveChildrenLink(child_scope) => {
@@ -120,7 +109,7 @@ impl Component for App {
                 false
             }
             Msg::AddElement(jtype) => {
-                self.children.insert(0, html!(<EditableElement jtype={jtype} />));
+                self.children.push( html!(<EditableElement jtype={jtype} />) ); 
                 ctx.link().send_message(Msg::IncrementGlobalCouter);
                 true
             }

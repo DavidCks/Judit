@@ -43,6 +43,7 @@ struct EditableBorderRadiusSelectorStyle {
     border_color: String,
     border_style: String,
     box_sizing: String,
+    z_index: String,
 }
 
 impl Style for EditableBorderRadiusSelectorStyle {
@@ -63,6 +64,7 @@ impl Style for EditableBorderRadiusSelectorStyle {
                 border_color: "",
                 border_style: "solid",
                 box_sizing: "border-box",
+                z_index: "9999",
             }
         )
     }

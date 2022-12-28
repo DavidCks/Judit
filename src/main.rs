@@ -72,11 +72,11 @@ impl Component for App {
             style: CanvasStyle::create(),
             children_links: Vec::new(),
             selected_child: None,
-            children: vec!( html!(<EditableElement></EditableElement>) ),
+            children: vec!( html!(<EditableElement jelcount={1}></EditableElement>) ),
             global_conds: GlobalConditions {
                 is_dropzones_enabled: false,
             },
-            global_counter: 0,
+            global_counter: 2,
         }
     }
 
@@ -109,7 +109,7 @@ impl Component for App {
                 false
             }
             Msg::AddElement(jtype) => {
-                self.children.push( html!(<EditableElement jtype={jtype} />) ); 
+                self.children.insert(0, html!(<EditableElement jelcount={ self.global_counter } jtype={jtype} />));
                 ctx.link().send_message(Msg::IncrementGlobalCouter);
                 true
             }
@@ -139,7 +139,7 @@ impl Component for App {
             <>
                 <main
                     onmousemove = { link.callback( |e| Msg::PropagateCursorMove(e) )}
-                    onmouseup = { link.callback( |e| Msg::StopAllEditing(e) )}
+                    onmouseup = { link.batch_callback( |e| vec![Msg::StopAllEditing(e), Msg::DisableDropzones ])}
                     class = { class_name.unwrap_or_default() }>
                     { for self.children.clone().into_iter()  }
                     //add component that grabs the style tag, adds content-editable + display: block so it can be live edited

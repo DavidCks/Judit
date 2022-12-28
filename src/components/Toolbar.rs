@@ -17,6 +17,7 @@ struct ToolbarStyle {
     width: String,
     height: String,
     padding_top: String,
+    z_index: String,
 }
 
 impl Style for ToolbarStyle {
@@ -30,6 +31,7 @@ impl Style for ToolbarStyle {
                 width: "40px",
                 height: "100%",
                 padding_top: "5px",
+                z_index: "9999",
             }
         )
     }

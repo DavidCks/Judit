@@ -21,6 +21,7 @@ struct Transform3DSelectorStyle {
     transform_style: String,
     transform: Transform,
     margin: String,
+    z_index: String,
 }
 
 impl Style for Transform3DSelectorStyle {
@@ -34,6 +35,7 @@ impl Style for Transform3DSelectorStyle {
                 transform_origin: "50% 50%",
                 transform: Transform { rotateX: "0deg", rotateY: "0deg", rotateZ: "0deg" },
                 margin: "0px 0px 0px 0px",
+                z_index: "9999",
             }
         )
     }

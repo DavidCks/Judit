@@ -14,6 +14,7 @@ struct EditToolsPanelStyle {
     width: String,
     writing_mode: String,
     direction: String,
+    z_index: String,
 }
 
 impl Style for EditToolsPanelStyle {
@@ -26,6 +27,7 @@ impl Style for EditToolsPanelStyle {
                 width: "fit-content",
                 writing_mode: "horizontal-tb",
                 direction: "ltr",
+                z_index: "9999",
             }
         )
     }

@@ -13,6 +13,7 @@ struct DeleteButtonStyle {
     height: String,
     right: String,
     top: String,
+    z_index: String,
 }
 
 impl Style for DeleteButtonStyle {
@@ -27,6 +28,7 @@ impl Style for DeleteButtonStyle {
                 height: width.clone(),
                 right: "-5px",
                 top: format!("calc(-{} - 2px)", width),
+                z_index: "9999",
             }
         )
     }

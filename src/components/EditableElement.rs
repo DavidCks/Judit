@@ -361,6 +361,7 @@ impl EditableElement {
                 jtype={ ee.jtype.clone() }
                 tag={ ee.tag.clone() }>
                     { ee.inner_html.clone() }
+                    { ee.children.iter().map(|child| EditableElement::from_link(child, jdepth + 1)).collect::<Html>()} // for nested stuff
                 </EditableElement>
             };
         }

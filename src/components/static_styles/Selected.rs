@@ -7,7 +7,6 @@ pub struct Selected {
     pub border_width: String,
     pub border_color: String,
     pub border_style: String,
-    pub transform_style: String,
 }
 
 impl Style for Selected {
@@ -17,7 +16,6 @@ impl Style for Selected {
                 border_width: "2px",
                 border_color: "cornflowerblue",
                 border_style: "dashed",
-                transform_style: "preserve-3d",
             }
         )
     }

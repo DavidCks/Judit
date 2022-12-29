@@ -1,6 +1,6 @@
 use yew::prelude::*;
 use yew::html::{Scope};
-use web_sys::{ MouseEvent, window };
+use web_sys::{ MouseEvent, window, Element };
 use append_to_string::*;
 use bevy_reflect::{ Reflect };
 use rusty_css::*;
@@ -38,6 +38,7 @@ impl Style for CanvasStyle {
 
 pub enum Msg {
     ReceiveSelectedChildLink(Scope<EditableElement>),
+    ReceiveSelectedChildElement(Option<Element>),
     ReceiveChildrenLink(Scope<EditableElement>),
     PropagateCursorMove(MouseEvent),
     StopAllEditing(MouseEvent),
@@ -52,6 +53,7 @@ struct App {
     style: CanvasStyle,
     children_links: Vec<Scope<EditableElement>>,
     selected_child: Option<Scope<EditableElement>>,
+    selected_child_element: Option<Element>,
     children: Vec<Html>,
     global_conds: GlobalConditions,
     global_counter: u32,
@@ -72,6 +74,7 @@ impl Component for App {
             style: CanvasStyle::create(),
             children_links: Vec::new(),
             selected_child: None,
+            selected_child_element: None,
             children: vec!( html!(<EditableElement jelcount={1}></EditableElement>) ),
             global_conds: GlobalConditions {
                 is_dropzones_enabled: false,
@@ -88,6 +91,10 @@ impl Component for App {
                     link.send_message(CMsg::Deselect);
                 }
                 self.selected_child = Some( child_scope );
+                false
+            }
+            Msg::ReceiveSelectedChildElement(element) => {
+                self.selected_child_element = element;
                 false
             }
             Msg::ReceiveChildrenLink(child_scope) => {

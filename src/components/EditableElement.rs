@@ -206,8 +206,8 @@ impl FromStr for JTypes {
     fn from_str(input: &str) -> Result<JTypes, Self::Err> {
         match input {
             "Div"  => Ok(JTypes::Div),
-            "Baz"  => Ok(JTypes::Text),
-            "Bat"  => Ok(JTypes::Image),
+            "Text"  => Ok(JTypes::Text),
+            "Image"  => Ok(JTypes::Image),
             _      => Err(()),
         }
     }
@@ -253,6 +253,7 @@ pub enum Msg {
 
     // Border Edit Panel Controls
     BorderColorChange(Event),
+    BorderVisibilityToggle,
 
     BorderTopLeftToggle,
     BorderTopToggle,
@@ -404,6 +405,7 @@ pub struct EditableElement {
     offset_y: i32,
     offset_cursor_pos: (i32, i32),
     z_index_buffer: String,
+    border_style_buffer: String,
 }
 
 impl EditableElement {
@@ -593,6 +595,7 @@ impl Component for EditableElement {
 
             is_dragging_in: false,
             z_index_buffer: "0".to_string(),
+            border_style_buffer: "none".to_string(),
 
             _immediate_parent_link: _immediate_parent_link,
             is_selected: false,
@@ -1361,6 +1364,16 @@ impl Component for EditableElement {
                 }
                 true
             },
+            Msg::BorderVisibilityToggle => {
+                if &self.style.border_style != "none" {
+                    self.border_style_buffer = self.style.border_style.clone();
+                    self.style.border_style = "none".to_string();
+                } else {
+                    self.style.border_style = self.border_style_buffer.clone();
+                    self.border_style_buffer = "none".to_string();
+                }
+                true
+            },
             Msg::Noop => {false},
         }
     }
@@ -1516,7 +1529,7 @@ impl Component for EditableElement {
                                     <BorderLeftButton onclick={link.callback(|_| Msg::BorderLeftToggle )}/>
                                     <BorderAllButton onclick={link.callback(|_| Msg::BorderAllToggle )}/>
                                     <BorderRightButton onclick={link.callback(|_| Msg::BorderRightToggle )}/>
-                                    <BorderVisibilityToggle />
+                                    <BorderVisibilityToggle onclick={link.callback(|_| Msg::BorderVisibilityToggle )}/>
 
                                     <BorderBottomLeftButton onclick={link.callback(|_| Msg::BorderBottomLeftToggle )}/>
                                     <BorderBottomButton onclick={link.callback(|_| Msg::BorderBottomToggle )}/>

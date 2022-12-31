@@ -13,6 +13,7 @@ struct FontPickerStyle_focus {
     border_width: String,
     border_color: String,
     border_style: String,    
+    box_shadow: String,
 }
 
 impl Style for FontPickerStyle_focus {
@@ -22,9 +23,10 @@ impl Style for FontPickerStyle_focus {
 
         append_to_string!(
             Self {
-                border_width: selected_style.border_width.clone(),
-                border_color: selected_style.border_color,
+                border_width: "0px",
+                border_color: "#0000",
                 border_style: "solid",
+                box_shadow: selected_style.box_shadow.clone()
             }
         )
     }
@@ -46,9 +48,6 @@ struct FontPickerStyle {
 
 impl Style for FontPickerStyle {
     fn create() -> Self {
-
-        let selected_style = SelectedStyle::create();
-
         append_to_string!(
             Self {
                 position: "initial",
@@ -56,7 +55,7 @@ impl Style for FontPickerStyle {
 
                 border_style: "solid",
                 border_color: "#EEEEEE00",
-                border_width: selected_style.border_width.clone(),
+                border_width: "0px",
                 border_radius: "10px",
                 background_color: "#EEEEEE",
                 font_size: "1rem",

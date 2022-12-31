@@ -5,7 +5,7 @@ use append_to_string::*;
 
 #[allow(non_snake_case)]
 #[derive(Reflect)]
-struct TextEditPanelStyle {
+struct BorderEditPanelStyle {
     display: String,
     grid_template_columns: String,
     gap: String,
@@ -15,7 +15,7 @@ struct TextEditPanelStyle {
     border_radius: String,
 }
 
-impl Style for TextEditPanelStyle {
+impl Style for BorderEditPanelStyle {
     fn create() -> Self {
         append_to_string!(
             Self {
@@ -32,25 +32,25 @@ impl Style for TextEditPanelStyle {
 }
 
 #[derive(Properties, PartialEq)]
-pub struct TextEditPanelProps {
+pub struct BorderEditPanelProps {
     #[prop_or_default]
     pub children: Children,
 }
 
-pub struct TextEditPanel {
-   style: TextEditPanelStyle
+pub struct BorderEditPanel {
+   style: BorderEditPanelStyle
 }
 
 pub enum Msg {
 }
 
-impl Component for TextEditPanel {
+impl Component for BorderEditPanel {
     type Message = Msg;
-    type Properties = TextEditPanelProps;
+    type Properties = BorderEditPanelProps;
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
-            style: TextEditPanelStyle::create(),
+            style: BorderEditPanelStyle::create(),
         }
     }
 

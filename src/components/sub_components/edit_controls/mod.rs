@@ -1,6 +1,6 @@
-#[allow(non_snake_case)]
+#![allow(non_snake_case)]
 pub mod Transform3DToggle;
-#[allow(non_snake_case)]
 pub mod Transform2DToggle;
-#[allow(non_snake_case)]
 pub mod EditControls;
+pub mod TextPanelToggle;
+pub mod BorderPanelToggle;

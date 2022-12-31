@@ -9,7 +9,7 @@ use yew::{prelude::*};
 use yew::virtual_dom::VNode;
 use bevy_reflect::{ Reflect };
 use append_to_string::*;
-use web_sys::{ MouseEvent, Element, HtmlSelectElement, Document, window };
+use web_sys::{ MouseEvent, Element, HtmlSelectElement, Document, window, HtmlInputElement };
 use rusty_css::*;
 use super::super::Msg as PMsg;
 
@@ -25,6 +25,8 @@ use super::sub_components::DeleteButton::DeleteButton as DeleteButton;
 use super::sub_components::edit_controls::EditControls::EditControls as EditControls;
     use super::sub_components::edit_controls::Transform3DToggle::Transform3DToggle as Transform3DToggle;
     use super::sub_components::edit_controls::Transform2DToggle::Transform2DToggle as Transform2DToggle;
+    use super::sub_components::edit_controls::TextPanelToggle::TextPanelToggle as TextPanelToggle;
+    use super::sub_components::edit_controls::BorderPanelToggle::BorderPanelToggle as BorderPanelToggle;
 
 // Optionally visible Buttons surrounding EditableElement
 use super::sub_components::edit_tools_panel::EditToolsPanel::EditToolsPanel as EditToolsPanel;
@@ -46,6 +48,22 @@ use super::sub_components::edit_tools_panel::EditToolsPanel::EditToolsPanel as E
         use super::sub_components::edit_tools_panel::text_edit_buttons::LeftAlignedHorizontalText::LeftAlignedHorizontalText as LeftAlignedHorizontalText;
         use super::sub_components::edit_tools_panel::text_edit_buttons::RightAlignedVerticalText::RightAlignedVerticalText as RightAlignedVerticalText;
         use super::sub_components::edit_tools_panel::text_edit_buttons::LeftAlignedVerticalText::LeftAlignedVerticalText as LeftAlignedVerticalText;
+
+    use super::sub_components::edit_tools_panel::BorderEditPanel::BorderEditPanel as BorderEditPanel;
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderTopLeftButton::BorderTopLeftButton as BorderTopLeftButton;
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderTopButton::BorderTopButton as BorderTopButton;
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderTopRightButton::BorderTopRightButton as BorderTopRightButton;
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderResizeButton::BorderResizeButton as BorderResizeButton;
+
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderLeftButton::BorderLeftButton as BorderLeftButton;
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderAllButton::BorderAllButton as BorderAllButton;
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderRightButton::BorderRightButton as BorderRightButton;
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderVisibilityToggle::BorderVisibilityToggle as BorderVisibilityToggle;
+
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderBottomLeftButton::BorderBottomLeftButton as BorderBottomLeftButton;
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderBottomButton::BorderBottomButton as BorderBottomButton;
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderBottomRightButton::BorderBottomRightButton as BorderBottomRightButton;
+        use super::sub_components::edit_tools_panel::border_edit_buttons::BorderColorButton::BorderColorButton as BorderColorButton;
 
 // Drag and Drop
 use super::sub_components::drop_zones::DropzoneLeft::DropzoneLeft as DropzoneLeft;
@@ -92,13 +110,17 @@ pub struct ComponentStyle {
     transform_style: String,
     transform: Transform,
 
+    border_top: String,
+    border_left: String,
+    border_right: String,
+    border_bottom: String,
+    border_color: String,
+    border_style: String,
+    border_width: String,
     border_top_left_radius: String,
     border_top_right_radius: String,
     border_bottom_left_radius: String,
     border_bottom_right_radius: String,
-    border_color: String,
-    border_style: String,
-    border_width: String,
 
     // text stuff
     text_align: String,
@@ -145,6 +167,10 @@ impl Style for ComponentStyle {
                 border_color: "#3f3f3f",
                 border_style: "solid",
                 border_width: "2px",
+                border_top: "",
+                border_left: "",
+                border_right: "",
+                border_bottom: "",
                 // writing stuff
                 text_align: "left",
                 writing_mode: "horizontal-tb",
@@ -194,6 +220,7 @@ pub enum EditStates {
     None,
     Move,
     Resize,
+    BorderResize,
     BorderRadius,
     Edit3D,
     Text,
@@ -219,8 +246,29 @@ pub enum Msg {
     //////////////////////
     // Edit Panel Stuff //
     //////////////////////
-    
-    // Text Edit Panel
+
+    // Border Edit Panel Toggle
+    HideBorderEditPanel,
+    ShowBorderEditPanel,
+
+    // Border Edit Panel Controls
+    BorderColorChange(Event),
+
+    BorderTopLeftToggle,
+    BorderTopToggle,
+    BorderTopRightToggle,
+    BorderLeftToggle,
+    BorderAllToggle,
+    BorderRightToggle,
+    BorderBottomLeftToggle,
+    BorderBottomToggle,
+    BorderBottomRightToggle,
+
+    // Text Edit Panel Toggle
+    HideTextEditPanel,
+    ShowTextEditPanel,
+
+    // Text Edit Panel Controls
     AlignTextLeft,
     AlignTextCenter,
     AlignTextJustify,
@@ -329,6 +377,11 @@ pub struct EditableElement {
     is_editing_3d_rotate_y: bool,
     is_editing_3d_rotate_z: bool,
     
+    // edit control panels toggles
+    is_text_panel_activated: bool,
+    is_border_panel_activated: bool,
+    is_color_panel_activated: bool,
+
     // text edits relative to mouse
     is_editing_text_size: bool,
     is_editing_text_spacing_letters: bool,
@@ -523,6 +576,11 @@ impl Component for EditableElement {
             is_eidting_radius_topleft: false,
             is_eidting_radius_topright: false,
 
+            // edit panels toggles
+            is_text_panel_activated: true,
+            is_border_panel_activated: true,
+            is_color_panel_activated: true,
+
             is_editing_3d: false,
             is_editing_3d_rotate_x: false,
             is_editing_3d_rotate_y: false,
@@ -692,6 +750,11 @@ impl Component for EditableElement {
                         self.editing_state = EditStates::Text;
                         self.is_editing_text_spacing_words = true;
                     }
+                    // Border width edit based on mouse movement
+                    "Judit_BorderResizeButton" => {
+                        self.editing_state = EditStates::BorderResize;
+                    }
+
                     &_ => {
                         if let Some(jrole) = target.get_attribute("jrole") {
                             info!("unused jrole. jrole found: '{}'", jrole);
@@ -886,6 +949,12 @@ impl Component for EditableElement {
                             let relative_word_spacing: f64 = self.style.word_spacing.try_to_f64().unwrap() + f64::from(offset_x) / 50_f64;
                             self.style.word_spacing = format!("{}em", relative_word_spacing);
 
+                        }
+                    },
+                    EditStates::BorderResize => {
+                        let relative_border_width = self.style.border_width.try_to_f64().unwrap() + f64::from(offset_x) / 50_f64;
+                        if relative_border_width > 0_f64 {
+                            self.style.border_width = format!("{}px", (relative_border_width * 100_f64).trunc() / 100_f64);
                         }
                     },
                     EditStates::None => {
@@ -1183,6 +1252,115 @@ impl Component for EditableElement {
                 self.z_index_buffer = "1".to_string();
                 true
             },
+            Msg::HideTextEditPanel => {
+                self.is_text_panel_activated = false;
+                true
+            },
+            Msg::ShowTextEditPanel => {
+                self.is_text_panel_activated = true;
+                true
+            },
+            Msg::HideBorderEditPanel => {
+                self.is_border_panel_activated = false;
+                true
+            },
+            Msg::ShowBorderEditPanel => {
+                self.is_border_panel_activated = true;
+                true
+            },
+            Msg::BorderColorChange(e) => {
+                let target = e.target_dyn_into::<HtmlInputElement>().unwrap();
+                let target_value = target.value();
+                self.style.border_color = target_value;
+                true
+            },
+            Msg::BorderTopLeftToggle => {
+                if &self.style.border_top == "none !important" || &self.style.border_left == "none !important" {
+                    self.style.border_top = "".to_string();
+                    self.style.border_left = "".to_string();
+                } else if &self.style.border_top == "" && &self.style.border_left == "" {
+                    self.style.border_top = "none !important".to_string();
+                    self.style.border_left = "none !important".to_string();
+                }
+                true
+            },
+            Msg::BorderTopToggle => {
+                if &self.style.border_top == "none !important" {
+                    self.style.border_top = "".to_string();
+                } else {
+                    self.style.border_top = "none !important".to_string();
+                }
+                true
+            },
+            Msg::BorderTopRightToggle => {
+                if &self.style.border_top == "none !important" || &self.style.border_right == "none !important" {
+                    self.style.border_top = "".to_string();
+                    self.style.border_right = "".to_string();
+                } else if &self.style.border_top == "" && &self.style.border_right == "" {
+                    self.style.border_top = "none !important".to_string();
+                    self.style.border_right = "none !important".to_string();
+                }
+                true
+            },
+            Msg::BorderLeftToggle => {
+                if &self.style.border_left == "none !important" {
+                    self.style.border_left = "".to_string();
+                } else {
+                    self.style.border_left = "none !important".to_string();
+                }
+                true
+            },
+            Msg::BorderAllToggle => {
+                if &self.style.border_left == "none !important" || &self.style.border_top == "none !important" || 
+                   &self.style.border_right == "none !important" || &self.style.border_bottom == "none !important" {
+                    self.style.border_left = "".to_string();
+                    self.style.border_top = "".to_string();
+                    self.style.border_bottom = "".to_string();
+                    self.style.border_right = "".to_string();
+                } else {
+                    self.style.border_left = "none !important".to_string();
+                    self.style.border_top = "none !important".to_string();
+                    self.style.border_bottom = "none !important".to_string();
+                    self.style.border_right = "none !important".to_string();
+                }
+                true
+            },
+            Msg::BorderRightToggle => {
+                if &self.style.border_right == "none !important" {
+                    self.style.border_right = "".to_string();
+                } else {
+                    self.style.border_right = "none !important".to_string();
+                }
+                true
+            },
+            Msg::BorderBottomLeftToggle => {
+                if &self.style.border_bottom == "none !important" || &self.style.border_left == "none !important" {
+                    self.style.border_bottom = "".to_string();
+                    self.style.border_left = "".to_string();
+                } else if &self.style.border_bottom == "" && &self.style.border_left == "" {
+                    self.style.border_bottom = "none !important".to_string();
+                    self.style.border_left = "none !important".to_string();
+                }
+                true
+            },
+            Msg::BorderBottomToggle => {
+                if &self.style.border_bottom == "none !important" {
+                    self.style.border_bottom = "".to_string();
+                } else {
+                    self.style.border_bottom = "none !important".to_string();
+                }
+                true
+            },
+            Msg::BorderBottomRightToggle => {
+                if &self.style.border_bottom == "none !important" || &self.style.border_right == "none !important" {
+                    self.style.border_bottom = "".to_string();
+                    self.style.border_right = "".to_string();
+                } else if &self.style.border_bottom == "" && &self.style.border_right == "" {
+                    self.style.border_bottom = "none !important".to_string();
+                    self.style.border_right = "none !important".to_string();
+                }
+                true
+            },
             Msg::Noop => {false},
         }
     }
@@ -1271,45 +1449,82 @@ impl Component for EditableElement {
                         <DeleteButton parent_transform={ self.style.transform.clone() } onclick={ link.callback(|_| Msg::Delete )}/>
                         // Edit Controls below the EditableElements
                         <EditControls parent_transform={ self.style.transform.clone() }>
+                            // 3D toggle
                             if self.is_editing_3d {
                                 <Transform2DToggle onclick={link.callback(|_| Msg::Transform2DToggle )} />
                             } else {
                                 <Transform3DToggle onclick={link.callback(|_| Msg::Transform3DToggle )} />
                             }
+
+                            // Text Toggle
+                            if self.is_text_panel_activated {
+                                <TextPanelToggle onclick={link.callback(|_| Msg::HideTextEditPanel )} />
+                            } else {
+                                <TextPanelToggle onclick={link.callback(|_| Msg::ShowTextEditPanel )} />
+                            }
+
+                            // Border Edit Toggle
+                            if self.is_border_panel_activated {
+                                <BorderPanelToggle onclick={link.callback(|_| Msg::HideBorderEditPanel )} />
+                            } else {
+                                <BorderPanelToggle onclick={link.callback(|_| Msg::ShowBorderEditPanel )} />
+                            }
+
                         </EditControls>
                         <EditToolsPanel parent_transform={ self.style.transform.clone() } >
-                            <TextEditPanel>
-                                <AlignRightButton onclick={link.callback(|_| Msg::AlignTextRight )}/>
-                                <AlignCenterButton onclick={link.callback(|_| Msg::AlignTextCenter )}/>
-                                <AlignJustifyButton onclick={link.callback(|_| Msg::AlignTextJustify )}/>
-                                <AlignLeftButton onclick={link.callback(|_| Msg::AlignTextLeft )}/>
+                            if self.is_text_panel_activated {
+                                <TextEditPanel>
+                                    <AlignRightButton onclick={link.callback(|_| Msg::AlignTextRight )}/>
+                                    <AlignCenterButton onclick={link.callback(|_| Msg::AlignTextCenter )}/>
+                                    <AlignJustifyButton onclick={link.callback(|_| Msg::AlignTextJustify )}/>
+                                    <AlignLeftButton onclick={link.callback(|_| Msg::AlignTextLeft )}/>
 
-                                <StyleBoldButton onclick={link.callback(|_| Msg::StyleTextBold )}/>
-                                <StyleItalicButton onclick={link.callback(|_| Msg::StyleTextItalic )}/>
-                                <StyleUnderlineButton onclick={link.callback(|_| Msg::StyleTextUnderline )}/>
-                                <StyleSizeButton onclick={link.callback(|_| Msg::StyleTextSize )}/>
+                                    <StyleBoldButton onclick={link.callback(|_| Msg::StyleTextBold )}/>
+                                    <StyleItalicButton onclick={link.callback(|_| Msg::StyleTextItalic )}/>
+                                    <StyleUnderlineButton onclick={link.callback(|_| Msg::StyleTextUnderline )}/>
+                                    <StyleSizeButton onclick={link.callback(|_| Msg::StyleTextSize )}/>
 
-                                <SpacingLinesButton onclick={link.callback(|_| Msg::SpacingLines )}/>
-                                <SpacingWordsButton onclick={link.callback(|_| Msg::SpacingWords )}/>
-                                <SpacingLettersButton onclick={link.callback(|_| Msg::SpacingLetters )}/>
-                                {   match self.style.writing_mode.as_str() {
-                                        "horizontal-tb" => {
-                                            html!{<RightAlignedVerticalText onclick={link.callback(|_| Msg::TextDirectionRLVertical )}/>}
-                                        },
-                                        "vertical-rl" => {
-                                            html!{<LeftAlignedVerticalText onclick={link.callback(|_| Msg::TextDirectionLRVertical )}/>}
-                                        },
-                                        "vertical-lr" => {
-                                            html!{<LeftAlignedHorizontalText onclick={link.callback(|_| Msg::TextDirectionLRHorizontal )}/>}
-                                        },
-                                        
-                                        &_ => {
-                                            todo!()
+                                    <SpacingLinesButton onclick={link.callback(|_| Msg::SpacingLines )}/>
+                                    <SpacingWordsButton onclick={link.callback(|_| Msg::SpacingWords )}/>
+                                    <SpacingLettersButton onclick={link.callback(|_| Msg::SpacingLetters )}/>
+                                    {   match self.style.writing_mode.as_str() {
+                                            "horizontal-tb" => {
+                                                html!{<RightAlignedVerticalText onclick={link.callback(|_| Msg::TextDirectionRLVertical )}/>}
+                                            },
+                                            "vertical-rl" => {
+                                                html!{<LeftAlignedVerticalText onclick={link.callback(|_| Msg::TextDirectionLRVertical )}/>}
+                                            },
+                                            "vertical-lr" => {
+                                                html!{<LeftAlignedHorizontalText onclick={link.callback(|_| Msg::TextDirectionLRHorizontal )}/>}
+                                            },
+                                            
+                                            &_ => {
+                                                todo!()
+                                            }
                                         }
                                     }
-                                }
-                                <FontPicker onchange={link.callback(|e| Msg::PickFont(e) )}/>
-                            </TextEditPanel>
+                                    <FontPicker onchange={link.callback(|e| Msg::PickFont(e) )}/>
+                                </TextEditPanel>
+                            }
+                            if self.is_border_panel_activated {
+                                <BorderEditPanel>
+                                    <BorderTopLeftButton onclick={link.callback(|_| Msg::BorderTopLeftToggle )}/>
+                                    <BorderTopButton onclick={link.callback(|_| Msg::BorderTopToggle )}/>
+                                    <BorderTopRightButton onclick={link.callback(|_| Msg::BorderTopRightToggle )}/>
+                                    <BorderResizeButton />
+
+                                    <BorderLeftButton onclick={link.callback(|_| Msg::BorderLeftToggle )}/>
+                                    <BorderAllButton onclick={link.callback(|_| Msg::BorderAllToggle )}/>
+                                    <BorderRightButton onclick={link.callback(|_| Msg::BorderRightToggle )}/>
+                                    <BorderVisibilityToggle />
+
+                                    <BorderBottomLeftButton onclick={link.callback(|_| Msg::BorderBottomLeftToggle )}/>
+                                    <BorderBottomButton onclick={link.callback(|_| Msg::BorderBottomToggle )}/>
+                                    <BorderBottomRightButton onclick={link.callback(|_| Msg::BorderBottomRightToggle )}/>
+                                    <BorderColorButton onchange={link.callback(|e| Msg::BorderColorChange(e) )}
+                                        background_color={ self.style.border_color.clone() }/>
+                                </BorderEditPanel>
+                            }
                         </EditToolsPanel>
                     }
                     if self.is_dragging_in && self.clone_selected().editing_state == EditStates::Move {

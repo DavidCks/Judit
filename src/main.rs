@@ -1,6 +1,8 @@
 use yew::prelude::*;
 use yew::html::{Scope};
 use web_sys::{ MouseEvent, window, Element };
+use web_sys::{MutationObserver, MutationObserverInit, MutationRecord};
+use wasm_bindgen::{JsCast, prelude::*};
 use append_to_string::*;
 use bevy_reflect::{ Reflect };
 use rusty_css::*;
@@ -57,11 +59,41 @@ struct App {
     children: Vec<Html>,
     global_conds: GlobalConditions,
     global_counter: u32,
+    observer_closure: Option<Closure<dyn FnMut(Vec<MutationRecord>)>>,
+    observer: Option<MutationObserver>,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct GlobalConditions {
     is_dropzones_enabled: bool,
+}
+impl App {
+    fn generate_observer_closure(&self, link: Scope<EditableElement>) -> Option<Closure<dyn FnMut(Vec<MutationRecord>)>> {
+        let element_uuid = link.get_component().unwrap().uuid;
+        let element = window().unwrap().document().unwrap().get_element_by_id(&element_uuid.to_string()).unwrap();
+        let observer_closure = Closure::wrap(Box::new(move |mutations: Vec<web_sys::MutationRecord>| {
+            mutations.into_iter().for_each(|mutation| {
+                if mutation.attribute_name().unwrap() == "style".to_string() {
+                    let new_style = element.get_attribute("style");
+                    link.send_message(CMsg::SyncStyle(new_style));
+                }
+            });
+        }) as Box<dyn FnMut(Vec<web_sys::MutationRecord>)>);
+        Some(observer_closure)
+    }
+
+    fn init_observer(&self) -> Option<MutationObserver> {
+        let element_uuid = self.selected_child.as_ref().unwrap().get_component().unwrap().uuid;
+        let element = web_sys::window().unwrap().document().unwrap().get_element_by_id(&element_uuid.to_string()).unwrap();
+        let closure = self.observer_closure.as_ref().unwrap().clone();
+
+        let observer_res = MutationObserver::new( closure.as_ref().dyn_ref().unwrap() );
+        let mut observer_init = MutationObserverInit::new();
+        observer_init.attributes(true);
+        let observer = observer_res.unwrap();
+        observer.observe_with_options(&element, &observer_init).unwrap();
+        Some(observer)
+    }
 }
 
 impl Component for App {
@@ -80,6 +112,8 @@ impl Component for App {
                 is_dropzones_enabled: false,
             },
             global_counter: 2,
+            observer_closure: None,
+            observer: None,
         }
     }
 
@@ -89,8 +123,11 @@ impl Component for App {
                 // Deselect current child
                 if let Some(link) = self.selected_child.as_ref() {
                     link.send_message(CMsg::Deselect);
+                    self.observer.as_ref().unwrap().disconnect();
                 }
-                self.selected_child = Some( child_scope );
+                self.selected_child = Some( child_scope.clone() );
+                self.observer_closure = self.generate_observer_closure(child_scope);
+                self.observer = self.init_observer();
                 false
             }
             Msg::ReceiveSelectedChildElement(element) => {

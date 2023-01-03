@@ -1,5 +1,5 @@
 use log::{ info };
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{JsCast, prelude::*};
 use std::fmt;
 use std::ops::Deref;
 use yew::html::Scope;
@@ -7,7 +7,7 @@ use std::str::FromStr;
 //use log::info;
 use yew::{prelude::*};
 use yew::virtual_dom::VNode;
-use bevy_reflect::{ Reflect };
+use bevy_reflect::{ Reflect, Uuid };
 use append_to_string::*;
 use web_sys::{ MouseEvent, Element, HtmlSelectElement, Document, window, HtmlInputElement };
 use rusty_css::*;
@@ -309,6 +309,7 @@ pub enum Msg {
     DropInBottom,
     // - without alignment
     DropInNoAlign(MouseEvent),
+    SyncStyle(Option<String>),
     
 
     Noop,
@@ -348,6 +349,7 @@ pub struct EditableElement {
     pub jdepth: u32,
     tag: String,
     inner_html: Html,
+    pub uuid: Uuid,
 
     style: ComponentStyle,
     border_selector_style_topleft: BorderSelectorStyle,
@@ -540,6 +542,7 @@ impl Component for EditableElement {
             );
         }
 
+        let uuid = Uuid::new_v4();
         Self {
             parent_link: parent_link.unwrap(),
             _document: window().unwrap().document().unwrap(),
@@ -548,6 +551,7 @@ impl Component for EditableElement {
             tag: tag,
             inner_html: inner_html,
             ee_children: ctx.props().ee_children.clone(),
+            uuid: uuid,
 
             style: init_style,
             border_selector_style_topleft: initial_border_selector_style.clone(),
@@ -1374,6 +1378,11 @@ impl Component for EditableElement {
                 }
                 true
             },
+            Msg::SyncStyle(style) => {
+                self.style.set_from_inline_string(style.unwrap().replace(" ", ""));
+                info!("{:?}", self.style);
+                false
+            },
             Msg::Noop => {false},
         }
     }
@@ -1423,7 +1432,8 @@ impl Component for EditableElement {
         }
 
         html! {
-            <@{tag} jrole = { "Judit_EditableElement" } 
+            <@{tag} id = { self.uuid.to_string() }
+                    jrole = { "Judit_EditableElement" } 
                     jdepth={ctx.props().jdepth.to_string()} 
                     inner_html={ format!("{:?}", self.inner_html.clone()) }
                     jtype={ self.jtype.clone().to_string() }

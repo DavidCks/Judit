@@ -23,7 +23,7 @@ exclude = [
 yew = { version = "0.20", features = ["csr"] }
 
 # js utilities
-web-sys = { version="0.3.60", features=["MouseEvent", "DomRect", "Element", "EventListener", "EventTarget", "SvgElement", "HtmlSelectElement", "DragEvent", "DomRect", "HtmlCollection"] }
+web-sys = { version="0.3.60", features=["MutationObserver", "MutationObserverInit", "MutationRecord", "Node", "MouseEvent", "DomRect", "Element", "EventListener", "EventTarget", "SvgElement", "HtmlSelectElement", "DragEvent", "DomRect", "HtmlCollection"] }
 wasm-bindgen = "0.2.38"
 gloo-events = "0.1"
 

@@ -151,7 +151,7 @@ impl Style for ComponentStyle {
                 height: "200px",
                 background_color: "#EEEEEE",
                 transform_origin: "50% 50%",
-                transform_style: "flat",
+                transform_style: "preserve-3d",
                 transform: Transform { 
                     skewX: "0deg",
                     skewY: "0deg",
@@ -336,7 +336,7 @@ pub struct Props {
     pub jelcount: u32,
 
     #[prop_or_default]
-    pub inner_html: Html,
+    pub inner_html: String,
 }
 
 #[derive(Clone)]
@@ -348,7 +348,7 @@ pub struct EditableElement {
     jtype: JTypes,
     pub jdepth: u32,
     tag: String,
-    inner_html: Html,
+    inner_html: String,
     pub uuid: Uuid,
 
     style: ComponentStyle,
@@ -426,10 +426,14 @@ impl EditableElement {
         self.parent_link.get_component().unwrap().selected_child.clone()
     }
 
-    fn clone_selected(&self) -> EditableElement {
+    fn clone_selected(&self) -> Option<EditableElement> {
         let selected_link = self.get_selected_link().unwrap();
-        let ref_selected_component = selected_link.get_component().unwrap();
-        ref_selected_component.deref().clone()
+        let ref_selected_component = selected_link.get_component();
+        if let Some(component) = ref_selected_component {
+            return Some(component.deref().clone());
+        } else {
+            return None
+        }
     }
 
     fn hide_selected(&self) {
@@ -461,7 +465,7 @@ impl EditableElement {
                     jtype={ jtype }
                     tag={ tag }
                     ee_children={ EditableElement::copy_children(jdepth + 1, child) }
-                    inner_html={ VNode::from_html_unchecked(inner_html.into()) }>
+                    inner_html={ inner_html }>
                     </EditableElement>
                 });
             }
@@ -527,16 +531,16 @@ impl Component for EditableElement {
                 match ctx.props().jtype {
                     JTypes::Div => { 
                         tag = "div";
-                        inner_html = html!();
+                        inner_html = "".to_string();
                     },
                     JTypes::Text => {
                         info!("fuck you");
                         tag = "p";
-                        inner_html = html!({ "Text Node" });
+                        inner_html = "<p>Text Node</p>".to_string();
                     },
                     JTypes::Image => {
                         tag = "picture";
-                        inner_html = html!(<img alt={"Image Node"} src={""}/>);
+                        inner_html = "<img alt=\"Image Node\"} src={\"\"}/>".to_string();
                     },
                 }
             );
@@ -642,12 +646,10 @@ impl Component for EditableElement {
             // 3D Transform enable / disable
             Msg::Transform3DToggle => {
                 self.is_editing_3d = true;
-                self.style.transform_style = "preserve-3d".to_string();
                 true
             }
             Msg::Transform2DToggle => {
                 self.is_editing_3d = false;
-                self.style.transform_style = "flat".to_string();
                 true
             }
             Msg::StartEditingWithCursor(e) => {
@@ -1063,7 +1065,7 @@ impl Component for EditableElement {
                     direct_parent.send_message(Msg::HideDropzones);
                 }
 
-                if !self.is_selected && self.parent_link.get_component().unwrap().global_conds.is_dropzones_enabled && self.clone_selected().editing_state == EditStates::Move  {
+                if !self.is_selected && self.parent_link.get_component().unwrap().global_conds.is_dropzones_enabled && self.clone_selected().unwrap().editing_state == EditStates::Move  {
                     info!("{}", self.parent_link.get_component().unwrap().global_conds.is_dropzones_enabled);
                     self.is_dragging_in = true;
                     self.style.opacity = ".5".to_string();
@@ -1092,7 +1094,9 @@ impl Component for EditableElement {
                 true
             }
             Msg::DropInTopLeft => {
-                let mut selected_component = self.clone_selected();
+                let selected_component = self.clone_selected();
+                if selected_component.is_none() { return false }
+                let mut selected_component = selected_component.unwrap();
 
                 let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
                 let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
@@ -1110,7 +1114,9 @@ impl Component for EditableElement {
                 true
             },
             Msg::DropInTopRight => {
-                let mut selected_component = self.clone_selected();
+                let selected_component = self.clone_selected();
+                if selected_component.is_none() { return false }
+                let mut selected_component = selected_component.unwrap();
 
                 let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
                 let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
@@ -1128,7 +1134,9 @@ impl Component for EditableElement {
                 true
             },
             Msg::DropInBottomLeft => {
-                let mut selected_component = self.clone_selected();
+                let selected_component = self.clone_selected();
+                if selected_component.is_none() { return false }
+                let mut selected_component = selected_component.unwrap();
 
                 let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
                 let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
@@ -1146,7 +1154,9 @@ impl Component for EditableElement {
                 true
             },
             Msg::DropInBottomRight => {
-                let mut selected_component = self.clone_selected();
+                let selected_component = self.clone_selected();
+                if selected_component.is_none() { return false }
+                let mut selected_component = selected_component.unwrap();
 
                 let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
                 let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
@@ -1164,7 +1174,9 @@ impl Component for EditableElement {
                 true
             },
             Msg::DropInTop => {
-                let mut selected_component = self.clone_selected();
+                let selected_component = self.clone_selected();
+                if selected_component.is_none() { return false }
+                let mut selected_component = selected_component.unwrap();
 
                 let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
                 let parent_border_width = self.style.border_width.try_to_f64().unwrap();
@@ -1181,7 +1193,9 @@ impl Component for EditableElement {
                 true
             },
             Msg::DropInLeft => {
-                let mut selected_component = self.clone_selected();
+                let selected_component = self.clone_selected();
+                if selected_component.is_none() { return false }
+                let mut selected_component = selected_component.unwrap();
 
                 let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
                 let parent_border_width = self.style.border_width.try_to_f64().unwrap();
@@ -1198,7 +1212,9 @@ impl Component for EditableElement {
                 true
             },
             Msg::DropInRight => {
-                let mut selected_component = self.clone_selected();
+                let selected_component = self.clone_selected();
+                if selected_component.is_none() { return false }
+                let mut selected_component = selected_component.unwrap();
 
                 let parent_half_width = self.style.width.try_to_f64().unwrap() / 2_f64;
                 let parent_border_width = self.style.border_width.try_to_f64().unwrap();
@@ -1215,7 +1231,9 @@ impl Component for EditableElement {
                 true
             },
             Msg::DropInBottom => {
-                let mut selected_component = self.clone_selected();
+                let selected_component = self.clone_selected();
+                if selected_component.is_none() { return false }
+                let mut selected_component = selected_component.unwrap();
 
                 let parent_half_height = self.style.height.try_to_f64().unwrap() / 2_f64;
                 let parent_border_width = self.style.border_width.try_to_f64().unwrap();
@@ -1232,7 +1250,9 @@ impl Component for EditableElement {
                 true
             },
             Msg::DropInNoAlign(e) => {
-                let mut selected_component = self.clone_selected();
+                let selected_component = self.clone_selected();
+                if selected_component.is_none() { return false }
+                let mut selected_component = selected_component.unwrap();
 
                 let mut target = e.target_dyn_into::<Element>().unwrap();
                 if target.tag_name() == "path".to_string() { target = target.parent_element().unwrap(); } 
@@ -1435,7 +1455,7 @@ impl Component for EditableElement {
             <@{tag} id = { self.uuid.to_string() }
                     jrole = { "Judit_EditableElement" } 
                     jdepth={ctx.props().jdepth.to_string()} 
-                    inner_html={ format!("{:?}", self.inner_html.clone()) }
+                    inner_html={ self.inner_html.clone() }
                     jtype={ self.jtype.clone().to_string() }
                 ondragstart = { link.callback( |e: DragEvent| { e.prevent_default(); Msg::Noop } )}
                 ondragend = { link.callback( |e: DragEvent| { e.prevent_default(); Msg::Noop } )}
@@ -1447,7 +1467,7 @@ impl Component for EditableElement {
                 onmouseup = { link.batch_callback( |e| vec!(Msg::StopEditingWithCursor(e), Msg::DisableDropzones) )}
                 style={ style }>
                     // Nested Elements
-                    { self.inner_html.clone() } //initial inner html based on tag / jtype
+                    { VNode::from_html_unchecked( self.inner_html.clone().into() )} //initial inner html based on tag / jtype
                     { for self.ee_children.clone() } // for nested stuff
                     // Editing Stuff
                     if self.is_selected {
@@ -1550,7 +1570,7 @@ impl Component for EditableElement {
                             }
                         </EditToolsPanel>
                     }
-                    if self.is_dragging_in && self.clone_selected().editing_state == EditStates::Move {
+                    if self.is_dragging_in && self.clone_selected().unwrap().editing_state == EditStates::Move {
                         // align edges
                         <DropzoneTop onmouseup={link.callback(|_| Msg::DropInTop )}/>
                         <DropzoneLeft onmouseup={link.callback(|_| Msg::DropInLeft )}/>

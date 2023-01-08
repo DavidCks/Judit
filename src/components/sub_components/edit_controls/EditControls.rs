@@ -16,6 +16,7 @@ struct EditControlsStyle {
     display: String,
     align_items: String,
     justify_content: String,
+    writing_mode: String,
     z_index: String,
 }
 
@@ -31,6 +32,7 @@ impl Style for EditControlsStyle {
                 display: "flex",
                 align_items: "flex-start",
                 justify_content: "left",
+                writing_mode: "horizontal-tb",
                 z_index: "9999",
             }
         )

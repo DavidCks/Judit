@@ -151,7 +151,7 @@ impl Style for ComponentStyle {
                 height: "200px",
                 background_color: "#EEEEEE",
                 transform_origin: "50% 50%",
-                transform_style: "preserve-3d",
+                transform_style: "flat",
                 transform: Transform { 
                     skewX: "0deg",
                     skewY: "0deg",
@@ -646,10 +646,12 @@ impl Component for EditableElement {
             // 3D Transform enable / disable
             Msg::Transform3DToggle => {
                 self.is_editing_3d = true;
+                self.style.transform_style = "preserve-3d".to_string();
                 true
             }
             Msg::Transform2DToggle => {
                 self.is_editing_3d = false;
+                self.style.transform_style = "flat".to_string();
                 true
             }
             Msg::StartEditingWithCursor(e) => {

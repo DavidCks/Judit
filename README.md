@@ -2,6 +2,8 @@
 
 <h3 align="center">A no-code editor written with yew in the Rust language</h3>
 
+OPEN TO CONTRIBUTIONS: I don't have time to improve on this project for the forseable future so any contributinos, big or small, are very welcome.
+
 <p>This is basically just an excuse to learn rust and yew for me. It might help the occasional lost soul in search of an incrediby niche solution though so here it is.</p>
 
 See it live here: <a href="https://judit.onrender.com/">https://judit.onrender.com/</a>
